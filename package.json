@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@10.6.5",
   "engines": {
-    "node": ">=20.12.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "dev:api": "pnpm --filter @sta/api dev",

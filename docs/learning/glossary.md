@@ -76,3 +76,9 @@
 | **Regression test**              | Re-running known cases after a change to make sure nothing that worked broke.                          |
 | **LRU cache**                    | Keeps recent items, drops the least-recently-used when full.                                           |
 | **Deep link**                    | A URL that opens a specific state, e.g. /chat?q=... asks that question.                                |
+| **Trace / observation**          | Trace = one request; observations = its steps (chain, retriever, embedding, generation).               |
+| **OpenTelemetry (OTel)**         | Open standard for traces/metrics; instrument once, send to any backend.                                |
+| **Span processor / exporter**    | Component that batches finished spans and sends them to a backend.                                     |
+| **Context propagation**          | The active span is carried automatically so child steps nest correctly.                                |
+| **Decorator**                    | A wrapper that adds behaviour (tracing) to an object without changing its callers.                     |
+| **Best-effort**                  | Tried but not guaranteed; failure must not affect the main work.                                       |

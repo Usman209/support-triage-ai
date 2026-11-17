@@ -14,9 +14,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",
+    "@langfuse/tracing": "^6.1.1",
+    "@sta/db": "workspace:*",
     "@sta/shared": "workspace:*",
-    "openai": "^7.57.0",
-    "@sta/db": "workspace:*"
+    "openai": "^7.57.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0"

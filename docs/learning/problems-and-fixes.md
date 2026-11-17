@@ -113,6 +113,18 @@ New problems are added at the bottom of each step's section as we build.
 | 54  | Headless Edge hung                    | Two instances at once                        | One at a time with timeout                 | Timeouts on external tools               |
 | 55  | eslint-disable for missing rule       | react-hooks plugin not installed             | Removed comment                            | Disable comments must name real rules    |
 
+## Step 11: Langfuse tracing
+
+| #   | Symptom                                           | Cause                                             | Fix                                       | Lesson                                        |
+| --- | ------------------------------------------------- | ------------------------------------------------- | ----------------------------------------- | --------------------------------------------- |
+| 56  | Langfuse SDK needs Node 22                        | OpenTelemetry-based SDK                           | engines, .nvmrc, CI → 22                  | Check requirements before adding dependencies |
+| 57  | SDK reads LANGFUSE_BASE_URL, we use LANGFUSE_HOST | Different env names                               | Pass values explicitly from config        | One source of config                          |
+| 58  | Scripted edit broke code (backticks ran in shell) | Template literals in a double-quoted shell string | Use the editor tool / script files        | Never put backtick code in shell strings      |
+| 59  | EADDRINUSE :3011 after edits                      | tsx watch restarted twice quickly                 | Verified the serving process had new code | Know your dev tools' restart behaviour        |
+| 60  | Langfuse trace API 410 Gone                       | Endpoint removed 2026-11-16                       | /api/public/v2/observations               | Read the error body                           |
+| 61  | First trace never arrived                         | Langfuse briefly unreachable                      | Retried after health 200                  | Tracing is best-effort; requests unaffected   |
+| 62  | "view trace" link missing                         | Dev server served an old bundle                   | Restarted pnpm dev:web                    | Check what the server actually serves         |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

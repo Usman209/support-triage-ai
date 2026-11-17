@@ -119,4 +119,14 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 55. **What is over-refusal?** Saying "I don't know" although sources answer; fix + regression set.
 56. **Why cache query embeddings?** Repeated questions; saves latency and cost; LRU bounds memory.
 
+## Tracing (step 11)
+
+57. **Logging vs tracing?** Logs are separate lines; a trace links all steps of one request with
+    timing and parent/child structure.
+58. **How do you trace an LLM app?** One trace per request; spans for retrieval, embedding, LLM,
+    tools; record model, prompt, output, tokens, latency, errors; tag prompt version.
+59. **Why OpenTelemetry?** Vendor-neutral: instrument once, export anywhere, join with HTTP/DB spans.
+60. **Tracing backend down?** Export in the background, never block or fail the request.
+61. **PII in traces?** Mask before export, restrict access, choose region and retention.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->
