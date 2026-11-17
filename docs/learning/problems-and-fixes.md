@@ -79,6 +79,18 @@ New problems are added at the bottom of each step's section as we build.
 | 35  | Voyage response format missing from main docs         | Docs split across pages                         | Read the API reference                                                     | Verify field names at the source                   |
 | 36  | Groq: 404 model_not_found for llama-3.3-70b-versatile | Docs page listed models this account cannot use | Asked the API: GET /models; chose gpt-oss-120b / gpt-oss-20b / qwen3.8-27b | Ask the API what is available; docs pages go stale |
 
+## Step 08: RAG ingestion
+
+| #   | Symptom                                                      | Cause                                   | Fix                                                             | Lesson                                              |
+| --- | ------------------------------------------------------------ | --------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------- |
+| 37  | Ticket CSV placed in data/knowledge-base/                    | Folder mix-up; that folder is committed | Moved to data/raw/ (gitignored), verified with git check-ignore | Customer data in a committed folder = PII on GitHub |
+| 38  | Dataset labels match only at chance (21% vs 20%, 26% vs 25%) | Synthetic data with random labels       | Own labelled test set in task 7                                 | Check your data before trusting metrics             |
+| 39  | CSV has no help articles                                     | Tickets are questions, not answers      | 16 sample articles, one per subject                             | RAG needs a knowledge source                        |
+| 40  | Free-tier embedding rate limits                              | Few requests/minute                     | One batched call; honour Retry-After                            | Design for rate limits                              |
+| 41  | @sta/ai needed Drizzle helpers                               | pnpm strict dependencies                | Re-export from @sta/db                                          | One library version across packages                 |
+| 42  | Paths broke depending on working folder                      | Resolved from cwd                       | Resolve from project root                                       | Resolve paths from a fixed anchor                   |
+| 43  | hit@1 100%                                                   | Easy, self-written test questions       | Treat as regression baseline                                    | Easy test sets are optimistic                       |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

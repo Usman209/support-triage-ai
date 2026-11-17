@@ -30,8 +30,8 @@ reaches the customer. This keeps risk low while we learn how good the system is.
 Results: slow **first response**, tickets sent to the wrong queue and re-assigned, and inconsistent
 answers to the same question.
 
-Evidence to collect from `customer_support_tickets.csv` once it is in `data/raw/`: ticket volume,
-distribution of types/priorities, first-response time and resolution time (if the columns exist).
+Evidence from `customer_support_tickets.csv` (see "Data findings" below): 8,469 tickets, 42
+consumer-electronics products, 16 subjects, spread evenly over 4 channels and 4 priorities.
 
 ## Success metric
 
@@ -98,6 +98,22 @@ Supporting metrics (each one is checked by evals or the dashboard later):
 - Languages other than English; voice/phone channels.
 - Fine-tuning models.
 - Integration with a real ticketing system (mock only for now).
+
+## Data findings (2026-11-17)
+
+Profiled `data/raw/customer_support_tickets.csv` (aggregates only, no PII printed):
+
+| Finding                            | Evidence                                                                                                                                         | Consequence                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Synthetic, template-generated text | 100% of 8,469 descriptions contain unfilled placeholders such as `{product_purchased}`                                                           | Good as realistic **input**; not real customer language                                  |
+| Labels are random                  | Subject "Refund request" has type "Refund request" in 21% of rows (5 types → 20% by chance); "Data loss" is Critical in 26% (4 priorities → 25%) | `Ticket Type` / `Ticket Priority` **cannot be ground truth** for accuracy metrics        |
+| Contains PII                       | Customer name, email, age, gender columns                                                                                                        | Stays in `data/raw/` (gitignored); redact before LLM/tracing (task 8)                    |
+| No help articles                   | The CSV is tickets only                                                                                                                          | Knowledge base = 16 **sample** articles, one per ticket subject (`data/knowledge-base/`) |
+
+**Decision:** category/priority accuracy targets will be measured on a **labelled test set we
+create** in task 7 (about 100 tickets, labelled with an LLM and checked by a human), not on the
+dataset's own labels. Baseline response times in the CSV are also synthetic, so the TTFR baseline
+must come from a real support team.
 
 ## Open questions (to confirm)
 

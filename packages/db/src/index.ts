@@ -30,3 +30,5 @@ export async function closeDb(): Promise<void> {
 }
 
 export * from './schema';
+// Query helpers re-exported so other packages use the same drizzle-orm version as the schema.
+export { and, eq, inArray, like, notInArray, sql } from 'drizzle-orm';

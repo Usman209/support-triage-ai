@@ -25,7 +25,8 @@
     "db:smoke": "pnpm --filter @sta/db db:smoke",
     "ai:smoke": "pnpm --filter @sta/ai ai:smoke",
     "seed": "tsx scripts/seed.ts",
-    "ingest": "tsx scripts/ingest.ts",
+    "ingest": "pnpm --filter @sta/ai ingest",
+    "kb:check": "pnpm --filter @sta/ai kb:check",
     "eval": "tsx scripts/eval.ts"
   },
   "devDependencies": {

@@ -13,7 +13,7 @@
  * Server-side only: never import this into a Next.js client component.
  */
 import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
 
 function findEnvFile(startDir: string): string | undefined {
@@ -29,6 +29,10 @@ function findEnvFile(startDir: string): string | undefined {
 
 const envFile = findEnvFile(process.cwd());
 if (envFile) process.loadEnvFile(envFile);
+
+// Relative paths in .env are resolved from the project root (the folder that holds .env),
+// so scripts work no matter which package folder they run from.
+const projectRoot = envFile ? dirname(envFile) : process.cwd();
 
 // Treat blank values ("KEY=") as missing.
 const blankToUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
@@ -92,6 +96,7 @@ const envSchema = z.object({
   RAG_RERANK_TOP_N: int(),
   RAG_RERANKER: z.enum(['none', 'cohere', 'local']),
   COHERE_API_KEY: optionalString(),
+  KNOWLEDGE_BASE_DIR: requiredString(),
 
   // Agent and approvals
   AGENT_MAX_STEPS: int(),
@@ -188,6 +193,10 @@ export const config = Object.freeze({
     rerankTopN: env.RAG_RERANK_TOP_N,
     reranker: env.RAG_RERANKER,
     cohereApiKey: env.COHERE_API_KEY,
+    /** Absolute path of the knowledge-base folder. */
+    knowledgeBaseDir: resolve(projectRoot, env.KNOWLEDGE_BASE_DIR),
+    /** Project root, used to store document sources as stable relative paths. */
+    projectRoot,
   },
   agent: {
     maxSteps: env.AGENT_MAX_STEPS,
