@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 00 Skeleton</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 00</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 00</span>
+        <h1>Project skeleton</h1>
+        <p class="lead">
+          Folders, tooling and placeholders before any feature. Every future file already has a
+          home, and the same checks run on your laptop and in CI.
+        </p>
+      </section>
+
+      <h2>1. How the packages depend on each other</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart TB
+  subgraph apps["apps/ (things you run)"]
+    web["@sta/web<br/>Next.js UI"]
+    api["@sta/api<br/>Hono API"]
+  end
+  subgraph packages["packages/ (shared code)"]
+    ai["@sta/ai<br/>providers · prompts · RAG · tools · agents"]
+    db["@sta/db<br/>Drizzle schema + migrations"]
+    shared["@sta/shared<br/>config · Zod schemas · types"]
+  end
+  web --> shared
+  api --> ai
+  api --> db
+  api --> shared
+  ai --> shared
+  db --> shared
+  classDef core fill:#eef0ff,stroke:#4f46e5,color:#16181d;
+  class shared core;
+        </pre>
+        <p class="caption">
+          Arrows mean "imports from". Everything depends on <code>@sta/shared</code>; nothing
+          depends on the apps. This keeps the AI layer reusable from scripts and tests.
+        </p>
+      </div>
+
+      <h2>2. Folder map</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>apps/</h3>
+          <p class="caption">web (UI), api (HTTP). Things you start and open.</p>
+        </div>
+        <div class="card">
+          <h3>packages/</h3>
+          <p class="caption">shared, ai, db. Libraries the apps import.</p>
+        </div>
+        <div class="card">
+          <h3>services/</h3>
+          <p class="caption">Python helpers: py-evals (Ragas), py-doc-parser (Docling).</p>
+        </div>
+        <div class="card">
+          <h3>evals/ · data/</h3>
+          <p class="caption">promptfoo tests · raw (gitignored), sample, knowledge-base.</p>
+        </div>
+        <div class="card">
+          <h3>infra/</h3>
+          <p class="caption">docker (local), terraform (Azure), helm (Kubernetes).</p>
+        </div>
+        <div class="card">
+          <h3>docs/</h3>
+          <p class="caption">brief, architecture, runbook, task map, learning, visual.</p>
+        </div>
+      </div>
+
+      <h2>3. Quality gate: the same checks everywhere</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  code["Your change"] --> fmt["Prettier<br/>pnpm format"]
+  fmt --> lint["ESLint<br/>pnpm lint"]
+  lint --> tsc["TypeScript strict<br/>pnpm typecheck"]
+  tsc --> ci["GitHub Actions CI<br/>same 3 checks"]
+  ci --> ok(["Ready to merge"])
+  lint -. "blocks process.env<br/>outside config.ts" .-> rule["Custom rule"]
+        </pre>
+      </div>
+
+      <h2>Files created</h2>
+      <div class="card files">
+        <span class="file new">package.json</span>
+        <span class="file new">pnpm-workspace.yaml</span>
+        <span class="file new">tsconfig.base.json</span>
+        <span class="file new">eslint.config.mjs</span>
+        <span class="file new">.prettierrc.json</span>
+        <span class="file new">.gitignore</span>
+        <span class="file new">.github/workflows/ci.yml</span>
+        <span class="file new">apps/*/package.json</span>
+        <span class="file new">packages/*/package.json</span>
+        <span class="file new">placeholders: TODO task N</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Comment-only <code>.ts</code> files can fail to compile
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>No import/export → TypeScript treats it as a global script
+        </div>
+        <div class="fix"><span class="label">Fix</span><code>moduleDetection: "force"</code></div>
+        <div class="lesson">Lesson: understand each tsconfig option instead of copying it.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Next.js can't use <code>@sta/shared</code> TypeScript
+        </div>
+        <div class="cause"><span class="label">Cause</span>Next compiles only its own folder</div>
+        <div class="fix">
+          <span class="label">Fix</span><code>transpilePackages</code> in next.config
+        </div>
+        <div class="lesson">
+          Lesson: source-only internal packages must be compiled by the app that uses them.
+        </div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "A monorepo lets shared types and config change in the same
+        PR as the apps that use them. Each package has one job, so the AI layer can be tested
+        without HTTP."
+      </div>
+
+      <div class="pager">
+        <a href="../index.html">← Overview</a>
+        <a href="../01-config/index.html">Step 01: Configuration →</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/00-project-skeleton.md">docs/learning/00-project-skeleton.md</a>
+      </p>
+    </main>
+  </body>
+</html>

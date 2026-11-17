@@ -1,0 +1,35 @@
+# CI placeholder: install, lint, format check, typecheck.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Fails if package.json and pnpm-lock.yaml disagree (repeatable installs).
+      - run: pnpm install --frozen-lockfile
+
+      # config.ts validates env at import time; CI uses the committed template values.
+      - run: cp .env.example .env
+
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+
+      # TODO task 7: run evals (needs provider keys from GitHub secrets).
+      # - run: pnpm eval
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

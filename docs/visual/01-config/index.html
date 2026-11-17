@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 01 Configuration</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 01</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 01</span>
+        <h1>Configuration and secrets</h1>
+        <p class="lead">
+          Every setting and secret lives in <code>.env</code>. One file reads it, checks it, and
+          gives the rest of the code a typed <code>config</code> object.
+        </p>
+      </section>
+
+      <h2>1. What happens when the app starts</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  env[".env<br/>(gitignored)"] --> load["config.ts<br/>loadEnvFile()"]
+  osenv["Variables already set<br/>(CI, Docker)"] --> load
+  load --> zod{"Zod schema<br/>valid?"}
+  zod -- yes --> cfg["config object<br/>typed + frozen"]
+  zod -- no --> err["Stop with clear error<br/>API_PORT: expected number"]
+  cfg --> api["@sta/api"]
+  cfg --> web["@sta/web (server only)"]
+  cfg --> ai["@sta/ai"]
+  cfg --> db["@sta/db"]
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class err bad;
+  class cfg good;
+        </pre>
+        <p class="caption">
+          Variables already in the environment win over <code>.env</code>, so production and CI can
+          inject secrets without a file.
+        </p>
+      </div>
+
+      <h2>2. What Zod does to each value</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>In .env (always text)</th>
+            <th>After Zod</th>
+            <th>Why</th>
+          </tr>
+          <tr>
+            <td><code>API_PORT=3011</code></td>
+            <td><code>3011</code> (number)</td>
+            <td>Ports are numbers, 1–65535</td>
+          </tr>
+          <tr>
+            <td><code>AGENT_REQUIRE_APPROVAL=true</code></td>
+            <td><code>true</code> (boolean)</td>
+            <td>Only "true"/"false" allowed</td>
+          </tr>
+          <tr>
+            <td><code>LLM_PROVIDER=gemini</code></td>
+            <td><span class="badge bad">error</span></td>
+            <td>Must be anthropic | openai | ollama</td>
+          </tr>
+          <tr>
+            <td><code>COHERE_API_KEY=</code></td>
+            <td><code>undefined</code></td>
+            <td>Blank = not set (secrets optional for now)</td>
+          </tr>
+          <tr>
+            <td><code>RAG_TOP_K=</code></td>
+            <td><span class="badge bad">error</span></td>
+            <td>Settings are required: no hidden defaults in code</td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>3. The rule is enforced by a tool</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  a["apps/api/src/x.ts<br/>process.env.API_KEY"] -->|ESLint| x["Error: import config<br/>from @sta/shared"]
+  b["packages/shared/src/config.ts<br/>process.env"] -->|ESLint| y["Allowed"]
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class x bad;
+  class y good;
+        </pre>
+      </div>
+
+      <h2>4. Config groups</h2>
+      <div class="card files">
+        <span class="file">app</span><span class="file">db</span><span class="file">llm</span>
+        <span class="file">rag</span><span class="file">agent</span
+        ><span class="file">guardrails</span> <span class="file">observability</span
+        ><span class="file">limits</span> <span class="file">integrations</span
+        ><span class="file">storage</span><span class="file">features</span>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">.env.example</span>
+        <span class="file new">.env (gitignored)</span>
+        <span class="file new">packages/shared/src/config.ts</span>
+        <span class="file changed">eslint.config.mjs</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span><code>KEY=</code> passed validation as <code>""</code>
+        </div>
+        <div class="cause"><span class="label">Cause</span>An empty string is still a string</div>
+        <div class="fix">
+          <span class="label">Fix</span><code>blankToUndefined</code> before validating
+        </div>
+        <div class="lesson">Lesson: normalise input first, then validate.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span><code>LANGFUSE_PUBLIC_KEY</code> appeared twice
+        </div>
+        <div class="cause"><span class="label">Cause</span>Copy-paste; first copy empty</div>
+        <div class="fix"><span class="label">Fix</span>Merged into one line, values unchanged</div>
+        <div class="lesson">Lesson: the last duplicate wins, so duplicates hide bugs.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Inline <code># comments</code> in .env read differently
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Node and Docker Compose parse .env differently
+        </div>
+        <div class="fix"><span class="label">Fix</span>Comments on their own line</div>
+        <div class="lesson">Lesson: use the format every tool agrees on.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "Config comes from the environment (12-factor). We validate
+        it once at startup with Zod and fail fast, then the code uses one typed object. Secrets are
+        never in git; in production they come from a secret manager."
+      </div>
+
+      <div class="pager">
+        <a href="../00-skeleton/index.html">← Step 00</a>
+        <a href="../02-infra/index.html">Step 02: Docker →</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/01-configuration-and-env.md"
+          >docs/learning/01-configuration-and-env.md</a
+        >
+      </p>
+    </main>
+  </body>
+</html>

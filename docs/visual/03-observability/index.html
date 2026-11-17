@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 03 Observability</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 03</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 03</span>
+        <h1>Observability: Langfuse</h1>
+        <p class="lead">
+          Record every AI request (prompt, answer, tokens, cost, time, errors) so we can debug and
+          measure. We use Langfuse Cloud; a self-hosted stack is ready but switched off.
+        </p>
+      </section>
+
+      <h2>1. Cloud (what we use) vs self-hosted (opt-in)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  app["Our app<br/>(task 3+)"] -->|"keys + HTTPS"| cloud["Langfuse Cloud EU<br/>cloud.langfuse.com"]
+  app -. "only if LANGFUSE_HOST=localhost:3002" .-> local
+  subgraph local["Self-hosted (off by default)"]
+    lweb["langfuse-web :3002"] --> lworker["langfuse-worker"]
+    lweb --> ldb[("Postgres")]
+    lworker --> ch[("ClickHouse")]
+    lweb --> redis[("Redis")]
+    lworker --> redis
+    lworker --> s3[("MinIO bucket langfuse")]
+  end
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class cloud good;
+        </pre>
+        <p class="caption">
+          Cloud: 2 keys, no maintenance. Self-hosted: 6 containers, your data stays local. Start it
+          with <code>pnpm infra:up:langfuse-local</code>.
+        </p>
+      </div>
+
+      <h2>2. What one trace will look like (from task 3)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  t["Trace: one user question<br/>total 3.2 s · $0.006"]
+  t --> s1["Span: PII redaction · 5 ms"]
+  t --> s2["Span: embed query · 120 ms"]
+  t --> s3["Span: vector search top-8 · 40 ms"]
+  t --> s4["Span: rerank top-4 · 300 ms"]
+  t --> s5["Generation: Claude · 2.7 s<br/>1,900 in / 350 out tokens"]
+  t --> sc["Scores: groundedness 0.95 · user 👍"]
+        </pre>
+        <p class="caption">Example numbers to show the idea; real values come once RAG is built.</p>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file changed">infra/docker/docker-compose.yml (profiles)</span>
+        <span class="file changed">package.json (infra:up:langfuse-local)</span>
+        <span class="file changed">.env (LANGFUSE_HOST, keys merged)</span>
+        <span class="file changed">.env.example</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Local Langfuse asked for a username/password
+        </div>
+        <div class="cause"><span class="label">Cause</span>Self-hosted starts with no users</div>
+        <div class="fix"><span class="label">Fix</span>Sign up locally, or use Cloud (chosen)</div>
+        <div class="lesson">Lesson: self-hosted tools often start empty.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Worker logged "table does not exist"
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Worker started before the database migrations finished
+        </div>
+        <div class="fix"><span class="label">Fix</span>None needed: stopped after 15 s</div>
+        <div class="lesson">Lesson: check timestamps before panicking about startup errors.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>6 unused containers running</div>
+        <div class="cause"><span class="label">Cause</span>We moved to Langfuse Cloud</div>
+        <div class="fix"><span class="label">Fix</span>Compose profile, off by default</div>
+        <div class="lesson">
+          Lesson: don't run what you don't use; keep it easy to turn back on.
+        </div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "LLM apps are non-deterministic, so we trace every request:
+        inputs, outputs, tokens, cost, latency and scores. Cloud or self-hosted depends on data
+        rules; either way we redact PII before anything leaves our system."
+      </div>
+
+      <div class="pager">
+        <a href="../02-infra/index.html">← Step 02</a>
+        <a href="../04-starter-app/index.html">Step 04: Starter app →</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/03-observability-langfuse.md"
+          >docs/learning/03-observability-langfuse.md</a
+        >
+      </p>
+    </main>
+  </body>
+</html>

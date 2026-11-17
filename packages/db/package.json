@@ -1,0 +1,24 @@
+{
+  "name": "@sta/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:smoke": "tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@sta/shared": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.19.0"
+  }
+}

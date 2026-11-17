@@ -1,0 +1,7 @@
+# TODO task 9: Helm chart for the API and web app on AKS.
+apiVersion: v2
+name: support-triage-ai
+description: Support-ticket triage assistant (placeholder chart)
+type: application
+version: 0.1.0
+appVersion: '0.1.0'

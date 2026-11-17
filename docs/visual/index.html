@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support Triage Visual Guide</title>
+    <link rel="stylesheet" href="assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs">Visual guide</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Visual guide</span>
+        <h1>See each step before you read the code</h1>
+        <p class="lead">
+          One page per step: a diagram of what we built, the files that changed, and the problems we
+          hit with their fixes. The text version of each step is in
+          <a href="../learning/README.md">docs/learning</a>.
+        </p>
+      </section>
+
+      <h2>Where we are going (target architecture)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  agent([Support agent]) --> web["Web app<br/>Next.js :3010"]
+  web --> api["API<br/>Hono :3011"]
+  api --> ai["AI layer<br/>packages/ai"]
+  ai --> llm[("LLM<br/>Claude")]
+  ai --> emb[("Embeddings<br/>OpenAI")]
+  ai --> pg[("PostgreSQL 18<br/>+ pgvector")]
+  api --> pg
+  api --> appr["Approval queue"]
+  appr -->|approved only| tix[("Ticketing system")]
+  api --> minio[("MinIO<br/>files")]
+  api -. traces .-> lf["Langfuse Cloud"]
+  classDef done fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  classDef todo fill:#eef0f4,stroke:#9aa1ad,color:#3a3f4a,stroke-dasharray:4 3;
+  class web,api,pg,minio,lf done;
+  class ai,llm,emb,appr,tix todo;
+        </pre>
+        <p class="caption">
+          <span class="badge ok">green = running now</span>
+          <span class="badge todo">dashed = coming in later tasks</span>
+        </p>
+      </div>
+
+      <h2>Steps</h2>
+      <div class="steps">
+        <a class="step" href="00-skeleton/index.html">
+          <span class="num">00</span> <strong>Project skeleton</strong>
+          <p>Monorepo, TypeScript, lint, CI. Where every future file lives.</p>
+          <span class="badge ok">Done</span>
+        </a>
+        <a class="step" href="01-config/index.html">
+          <span class="num">01</span> <strong>Configuration and secrets</strong>
+          <p>.env → Zod → one typed <code>config</code> object. Fail fast.</p>
+          <span class="badge ok">Done</span>
+        </a>
+        <a class="step" href="02-infra/index.html">
+          <span class="num">02</span> <strong>Docker: Postgres + MinIO</strong>
+          <p>Local services, buckets, policies, least privilege.</p>
+          <span class="badge ok">Done</span>
+        </a>
+        <a class="step" href="03-observability/index.html">
+          <span class="num">03</span> <strong>Observability: Langfuse</strong>
+          <p>Cloud vs self-hosted, traces and spans.</p>
+          <span class="badge ok">Done</span>
+        </a>
+        <a class="step" href="04-starter-app/index.html">
+          <span class="num">04</span> <strong>Starter app</strong>
+          <p>Browser → web → API /health. First real URLs.</p>
+          <span class="badge ok">Done</span>
+        </a>
+        <a class="step" href="05-discovery/index.html">
+          <span class="num">05</span> <strong>Task 1: Discovery brief</strong>
+          <p>User, pain, metric, approval rules, risks.</p>
+          <span class="badge warn">Draft</span>
+        </a>
+        <a class="step" href="06-rag-schema/index.html">
+          <span class="num">06</span> <strong>Task 3.1: RAG database tables</strong>
+          <p>documents + chunks + vector(1536), HNSW index, migrations.</p>
+          <span class="badge ok">Done</span>
+        </a>
+        <div class="step disabled">
+          <span class="num">07</span> <strong>Task 3.2: LLM providers</strong>
+          <p>Claude for chat, OpenAI for embeddings, behind one interface.</p>
+          <span class="badge todo">Next</span>
+        </div>
+        <div class="step disabled">
+          <span class="num">08+</span> <strong>Task 3.3–3.6</strong>
+          <p>Ingestion, retrieval + /chat, chat UI, tracing.</p>
+          <span class="badge todo">Planned</span>
+        </div>
+      </div>
+
+      <div class="pager">
+        <span></span>
+        <a href="00-skeleton/index.html">Start with step 00 →</a>
+      </div>
+    </main>
+  </body>
+</html>

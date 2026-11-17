@@ -1,0 +1,9 @@
+# Placeholder: document parsing service (task P2). Not implemented yet.
+[project]
+name = "sta-py-doc-parser"
+version = "0.1.0"
+description = "Docling-based document parsing for the support-triage-ai knowledge base"
+requires-python = ">=3.11"
+dependencies = [
+  # TODO task P2: add docling, python-dotenv
+]

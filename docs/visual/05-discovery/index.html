@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 05 Discovery Brief</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 05</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 05 · Task 1 · Draft</span>
+        <h1>Discovery brief</h1>
+        <p class="lead">
+          Who it is for, what hurts, how we measure success, and what the AI may and may not do.
+          Decided before building any AI feature.
+        </p>
+      </section>
+
+      <h2>1. From problem to tests</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  user["User<br/>Tier-1 support agent"] --> pain["Pain<br/>slow triage · searching articles · writing replies"]
+  pain --> metric["North-star metric<br/>time to first response −30%"]
+  metric --> m1["Category / priority accuracy"]
+  metric --> m2["Groundedness · retrieval hit rate"]
+  metric --> m3["Reply acceptance"]
+  metric --> m4["Latency · cost"]
+  m1 --> t7["Evals (task 7)"]
+  m2 --> t7
+  m2 --> p1["RAG metrics (P1)"]
+  m3 --> t4["Approval UI (task 4)"]
+  m4 --> t10["Dashboard (task 10)"]
+        </pre>
+        <p class="caption">
+          Every metric becomes a test or a dashboard number later. The brief is the spec.
+        </p>
+      </div>
+
+      <h2>2. Assistant, not autopilot</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  ticket["New ticket"] --> ai["AI suggests<br/>category · priority · reply + sources"]
+  ai --> human{"Agent reviews"}
+  human -->|approve| done["Action runs<br/>(logged)"]
+  human -->|edit| done
+  human -->|reject| no["Nothing happens<br/>(logged)"]
+  done --> customer["Agent sends reply<br/>to customer"]
+        </pre>
+      </div>
+
+      <h2>3. Approval rules</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Action</th>
+            <th>Rule</th>
+            <th>Why</th>
+          </tr>
+          <tr>
+            <td>Search help centre, read ticket, similar tickets</td>
+            <td><span class="badge ok">No approval</span></td>
+            <td>Read-only</td>
+          </tr>
+          <tr>
+            <td>Set category / priority</td>
+            <td><span class="badge warn">Approval</span></td>
+            <td>Wrong value misroutes the ticket</td>
+          </tr>
+          <tr>
+            <td>Draft reply</td>
+            <td><span class="badge warn">Approval</span></td>
+            <td>Customer-facing text</td>
+          </tr>
+          <tr>
+            <td>Internal note, escalate / assign</td>
+            <td><span class="badge warn">Approval</span></td>
+            <td>Moves work between people</td>
+          </tr>
+          <tr>
+            <td>Send to customer, close, refund, delete</td>
+            <td><span class="badge bad">Never by AI</span></td>
+            <td>High impact or irreversible</td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>4. Top risks and their guards</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Hallucination</h3>
+          <p class="caption">
+            Answer only from retrieved articles, show citations, groundedness evals.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Wrong action</h3>
+          <p class="caption">Human approval for every write, audit log.</p>
+        </div>
+        <div class="card">
+          <h3>PII leak</h3>
+          <p class="caption">Redact before the LLM and before tracing.</p>
+        </div>
+        <div class="card">
+          <h3>Prompt injection</h3>
+          <p class="caption">Injection checks, tool allow-list, approval gate.</p>
+        </div>
+        <div class="card">
+          <h3>Cost overrun</h3>
+          <p class="caption">Daily budget guard, cheap-model routing.</p>
+        </div>
+        <div class="card">
+          <h3>Automation bias</h3>
+          <p class="caption">Citations, confidence, track edits and rejects.</p>
+        </div>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file changed">docs/discovery-brief.md</span>
+        <span class="file new">docs/learning/05-discovery-brief.md</span>
+        <span class="file changed">docs/task-map.md</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>No interview answers, no data</div>
+        <div class="cause"><span class="label">Cause</span>Learning project; CSV not added yet</div>
+        <div class="fix">
+          <span class="label">Fix</span>Draft with labelled assumptions [A] + open questions
+        </div>
+        <div class="lesson">Lesson: don't wait. Write assumptions down and get them confirmed.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "I start with discovery: one user, one pain, one north-star
+        metric with a baseline, and clear rules for what the AI may do. Then I build the smallest
+        version and measure it."
+      </div>
+
+      <div class="pager">
+        <a href="../04-starter-app/index.html">← Step 04</a>
+        <a href="../06-rag-schema/index.html">Step 06: RAG tables →</a>
+      </div>
+      <p class="caption">
+        Brief: <a href="../../discovery-brief.md">docs/discovery-brief.md</a> · Text version:
+        <a href="../../learning/05-discovery-brief.md">docs/learning/05-discovery-brief.md</a>
+      </p>
+    </main>
+  </body>
+</html>

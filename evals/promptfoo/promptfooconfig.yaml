@@ -1,0 +1,15 @@
+# TODO task 7: promptfoo eval suite for triage quality and regressions.
+# Placeholder only. Planned shape:
+#
+# description: support-triage-ai triage evals
+# prompts:
+#   - file://../../packages/ai/src/prompts/triage.prompt.ts
+# providers:
+#   - id: <set from MODEL_CHAT>
+# tests: file://datasets/*.yaml
+# defaultTest:
+#   assert:
+#     - type: llm-rubric   # graded by MODEL_JUDGE
+#
+# Red-team config (task 8) lives in ./redteam/.
+description: support-triage-ai evals (placeholder)

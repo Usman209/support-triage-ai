@@ -1,0 +1,40 @@
+{
+  "name": "support-triage-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Support-ticket triage assistant: RAG, approval-gated agent, evals and observability.",
+  "type": "module",
+  "packageManager": "pnpm@10.6.5",
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter @sta/api dev",
+    "dev:web": "pnpm --filter @sta/web dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm -r typecheck",
+    "infra:up": "docker compose --env-file .env -f infra/docker/docker-compose.yml up -d",
+    "infra:up:langfuse-local": "docker compose --env-file .env -f infra/docker/docker-compose.yml --profile langfuse-local up -d",
+    "infra:up:postgres-local": "docker compose --env-file .env -f infra/docker/docker-compose.yml --profile postgres-local up -d",
+    "infra:down": "docker compose --env-file .env -f infra/docker/docker-compose.yml --profile langfuse-local --profile postgres-local down",
+    "db:generate": "pnpm --filter @sta/db db:generate",
+    "db:migrate": "pnpm --filter @sta/db db:migrate",
+    "db:smoke": "pnpm --filter @sta/db db:smoke",
+    "seed": "tsx scripts/seed.ts",
+    "ingest": "tsx scripts/ingest.ts",
+    "eval": "tsx scripts/eval.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.12.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "prettier": "^3.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 04 Starter App</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 04</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 04</span>
+        <h1>Starter app: API + web shell</h1>
+        <p class="lead">
+          The first real URLs: a web page on <code>:3010</code> that calls the API on
+          <code>:3011</code> and shows whether it is online.
+        </p>
+      </section>
+
+      <h2>1. One request, end to end</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+sequenceDiagram
+  participant B as Browser
+  participant W as Next.js server :3010
+  participant A as Hono API :3011
+  B->>W: GET /
+  W->>A: GET /health (server to server)
+  A-->>W: {"status":"ok","service":...}
+  W-->>B: HTML: "API status: online"
+  Note over B,W: The browser never sees config or the API URL
+        </pre>
+      </div>
+
+      <h2>2. Inside the API</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  idx["index.ts<br/>serve() on config.app.apiPort"] --> app["app.ts<br/>logger middleware"]
+  app --> root["GET /"]
+  app --> health["routes/health.ts<br/>GET /health"]
+  app -. task 3 .-> chat["routes/chat.ts"]
+  app -. task 4 .-> appr["routes/approvals.ts"]
+  classDef todo fill:#eef0f4,stroke:#9aa1ad,color:#3a3f4a,stroke-dasharray:4 3;
+  class chat,appr todo;
+        </pre>
+      </div>
+
+      <h2>3. Inside the web app</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart TB
+  launcher["scripts/next.ts<br/>reads WEB_PORT from config"] --> next["next dev --port 3010"]
+  next --> layout["app/layout.tsx<br/>nav bar"]
+  layout --> home["app/page.tsx<br/>links + API status"]
+  layout --> chat["app/chat/page.tsx<br/>placeholder · task 3"]
+  layout --> appr["app/approvals/page.tsx<br/>placeholder · task 4"]
+  layout --> dash["app/dashboard/page.tsx<br/>placeholder · task 10"]
+        </pre>
+      </div>
+
+      <h2>URLs</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Web</h3>
+          <a href="http://localhost:3010">http://localhost:3010</a>
+          <p class="caption">Run <code>pnpm dev:web</code> first</p>
+        </div>
+        <div class="card">
+          <h3>API health</h3>
+          <a href="http://localhost:3011/health">http://localhost:3011/health</a>
+          <p class="caption">Run <code>pnpm dev:api</code> first</p>
+        </div>
+        <div class="card">
+          <h3>MinIO console</h3>
+          <a href="http://localhost:9001">http://localhost:9001</a>
+          <p class="caption">Run <code>pnpm infra:up</code> first</p>
+        </div>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file changed">apps/api/src/index.ts</span>
+        <span class="file changed">apps/api/src/app.ts</span>
+        <span class="file changed">apps/api/src/routes/health.ts</span>
+        <span class="file new">apps/web/scripts/next.ts</span>
+        <span class="file changed">apps/web/src/app/layout.tsx</span>
+        <span class="file changed">apps/web/src/app/page.tsx</span>
+        <span class="file changed">apps/web/src/app/{chat,approvals,dashboard}/page.tsx</span>
+        <span class="file changed">.env (ports, API_URL)</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>Ports 3000 and 3001 already in use</div>
+        <div class="cause">
+          <span class="label">Cause</span>Other local containers (Metabase, another backend)
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span><code>WEB_PORT=3010</code>, <code>API_PORT=3011</code>
+        </div>
+        <div class="lesson">Lesson: check ports first; always make them configurable.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Next.js ignores <code>WEB_PORT</code>
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Next reads only <code>PORT</code> or <code>--port</code>
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Launcher script passes the port from config
+        </div>
+        <div class="lesson">Lesson: bridge tools to your config instead of hardcoding.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>First page load took ~13 s</div>
+        <div class="cause">
+          <span class="label">Cause</span>Dev mode compiles each page on first request
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Nothing; fast afterwards and in production
+        </div>
+        <div class="lesson">Lesson: dev speed is not production speed.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "We built a walking skeleton first: browser to web to API
+        with a health endpoint. Features are added to a system that already runs end to end."
+      </div>
+
+      <div class="pager">
+        <a href="../03-observability/index.html">← Step 03</a>
+        <a href="../05-discovery/index.html">Step 05: Discovery →</a>
+      </div>
+      <p class="caption">
+        Text version: <a href="../../learning/04-starter-app.md">docs/learning/04-starter-app.md</a>
+      </p>
+    </main>
+  </body>
+</html>

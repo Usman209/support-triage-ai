@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 02 Docker Infra</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 02</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 02</span>
+        <h1>Docker: Postgres + MinIO</h1>
+        <p class="lead">
+          One command (<code>pnpm infra:up</code>) starts the database and file storage on your
+          laptop, configured from the same <code>.env</code>.
+        </p>
+      </section>
+
+      <div class="idea">
+        <strong>Update (step 06):</strong> the app database is now PostgreSQL 18 installed on
+        Windows. The Docker Postgres shown below is opt-in (<code>pnpm infra:up:postgres-local</code
+        >).
+        <a href="../06-rag-schema/index.html">Why: port clash →</a>
+      </div>
+
+      <h2>1. What runs in Docker</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  envf[".env"] -->|"--env-file"| compose["docker-compose.yml"]
+  compose --> pg[("postgres<br/>pgvector/pgvector:pg16<br/>host port 5436")]
+  compose --> minio[("minio<br/>bitnamilegacy/minio:2025.4.22<br/>:9000 API · :9001 console")]
+  compose --> init["minio-init<br/>runs once, then exits"]
+  init -->|"waits for healthy"| minio
+  init -->|"creates"| setup["buckets · policies · app user"]
+        </pre>
+      </div>
+
+      <h2>2. Who can do what in MinIO (least privilege)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  root["Root admin<br/>MINIO_ROOT_USER"] -->|everything| all["All buckets + admin"]
+  app["App user sta-app<br/>policy sta-app-rw"] -->|read/write objects| lfb[("langfuse<br/>private")]
+  app -->|read/write objects| pub[("public")]
+  app -.->|"denied"| no1["create bucket / admin"]
+  anon["Anyone (no login)"] -->|"download by exact URL"| pub
+  anon -.->|"denied"| no2["list public bucket"]
+  anon -.->|"denied"| lfb
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  classDef warn fill:#fdf3e2,stroke:#a15c07,color:#3a2504;
+  class no1,no2 bad;
+  class root warn;
+        </pre>
+        <p class="caption">
+          Root is used only by the init container. The app and Langfuse use <code>sta-app</code>.
+          Every rule was tested with real requests: anonymous download 200, list 403.
+        </p>
+      </div>
+
+      <h2>3. The startup race we hit (and fixed)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+sequenceDiagram
+  participant D as Docker
+  participant M as MinIO container
+  participant I as minio-init
+  D->>M: start
+  M->>M: Bitnami setup starts MinIO (temporary)
+  D->>M: healthcheck
+  M-->>D: healthy ✔
+  D->>I: start (minio is healthy)
+  M->>M: stop temporary MinIO
+  I->>M: connect
+  M-->>I: connection refused ✖
+  M->>M: start real MinIO
+  Note over I: Fix: retry loop until mc ready
+  I->>M: retry connect
+  M-->>I: OK ✔
+  I->>M: buckets, policies, user
+        </pre>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">infra/docker/docker-compose.yml</span>
+        <span class="file new">infra/docker/minio/minio-init.sh</span>
+        <span class="file changed">.env / .env.example (MinIO section)</span>
+        <span class="file changed">packages/shared/src/config.ts (storage)</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span><code>pull access denied</code> for minio/minio, 401 on
+          quay.io
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>MinIO stopped publishing community images
+        </div>
+        <div class="fix"><span class="label">Fix</span>Bitnami archive of release 2025-04-22</div>
+        <div class="lesson">
+          Lesson: pin versions and know your fallback. Archived images get no security updates:
+          local dev only.
+        </div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Init failed: connection refused although "healthy"
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Image restarts MinIO after its own setup
+        </div>
+        <div class="fix"><span class="label">Fix</span>Retry loop in minio-init.sh</div>
+        <div class="lesson">Lesson: healthy once does not mean ready now. Clients must retry.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Anyone could list all files in <code>public</code>
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>"download" preset includes ListBucket
+        </div>
+        <div class="fix"><span class="label">Fix</span>Custom policy: GetObject only</div>
+        <div class="lesson">
+          Lesson: test security with an anonymous request; don't trust a preset's name.
+        </div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Starting only MinIO failed on Langfuse variables
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Compose checks variables in the whole file
+        </div>
+        <div class="fix"><span class="label">Fix</span>Generated all local passwords in .env</div>
+        <div class="lesson">Lesson: Compose validates the entire file, not one service.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "We use Postgres with pgvector, so tickets, approvals and
+        embeddings live in one database with SQL joins and normal backups. Each service gets its own
+        credentials with the minimum permissions, and setup scripts are idempotent."
+      </div>
+
+      <div class="pager">
+        <a href="../01-config/index.html">← Step 01</a>
+        <a href="../03-observability/index.html">Step 03: Langfuse →</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/02-docker-postgres-minio.md"
+          >docs/learning/02-docker-postgres-minio.md</a
+        >
+      </p>
+    </main>
+  </body>
+</html>
