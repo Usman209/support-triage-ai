@@ -63,3 +63,9 @@
 | **Prune**                        | Delete index entries whose source no longer exists.                                                   |
 | **hit@k**                        | Share of test questions whose correct document is in the top k results.                               |
 | **Ground truth**                 | Trusted correct answers used to score a system.                                                       |
+| **Retriever**                    | Finds the chunks most similar to a question (vector search).                                          |
+| **Reranker**                     | Re-orders retrieved chunks by relevance and keeps the best few.                                       |
+| **Relevance threshold**          | Max distance for a chunk to count as relevant (RAG_MAX_DISTANCE).                                     |
+| **Grounded answer**              | An answer supported by the provided sources, with citations.                                          |
+| **Citation**                     | A [n] marker linking a statement to a numbered source.                                                |
+| **API contract**                 | The agreed request/response shape (our Zod schema + types).                                           |

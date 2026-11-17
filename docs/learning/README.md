@@ -27,8 +27,8 @@ Read the steps in order. Each step file has the same sections:
 | 06  | [Task 3.1: RAG database tables (pgvector)](06-rag-database-schema.md)        | Done    |
 | 07  | [Task 3.2: LLM providers (chat + embeddings)](07-llm-providers.md)           | Done    |
 | 08  | [Task 3.3: Ingestion (chunk, embed, store)](08-rag-ingestion.md)             | Done    |
-| 09  | Task 3.4: Retrieval + /chat API with citations                               | Next    |
-| 10  | Task 3.5: Chat UI                                                            | Planned |
+| 09  | [Task 3.4: Retrieval + /chat API with citations](09-rag-chat-api.md)         | Done    |
+| 10  | Task 3.5: Chat UI                                                            | Next    |
 | 11  | Task 3.6: Langfuse tracing                                                   | Planned |
 | 12+ | Task 4 agent, 7 evals, 8 security, 9 deployment, 10 monitoring               | Planned |
 

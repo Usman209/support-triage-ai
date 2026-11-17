@@ -91,6 +91,15 @@ New problems are added at the bottom of each step's section as we build.
 | 42  | Paths broke depending on working folder                      | Resolved from cwd                       | Resolve from project root                                       | Resolve paths from a fixed anchor                   |
 | 43  | hit@1 100%                                                   | Easy, self-written test questions       | Treat as regression baseline                                    | Easy test sets are optimistic                       |
 
+## Step 09: /chat API
+
+| #   | Symptom                                         | Cause                         | Fix                                                    | Lesson                                      |
+| --- | ----------------------------------------------- | ----------------------------- | ------------------------------------------------------ | ------------------------------------------- |
+| 44  | Unknown "relevant" cut-off                      | Distance distribution unknown | Measured: relevant ≤0.53, off-topic ≥0.76 → 0.70       | Choose thresholds from data                 |
+| 45  | Related-but-uncovered questions pass the filter | Shared words                  | Exact "not found" sentence in prompt, detected in code | Cheap filter + model judgment               |
+| 46  | Citations empty although answer cited           | gpt-oss wrote 【1】 not [1]   | Normalise citation variants                            | Test with the real model; normalise outputs |
+| 47  | Answers contain **bold** Markdown               | Model formatting              | Render Markdown in the UI (step 10)                    | Decide how to display model output          |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).
