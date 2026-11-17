@@ -34,7 +34,7 @@
 flowchart LR
   callers["RAG · agent · API<br/>(later steps)"] --> fc["getChatProvider()"]
   callers --> fe["getEmbeddingProvider()"]
-  fc -->|LLM_PROVIDER=groq| groq["GroqChatProvider<br/>llama-3.3-70b · free tier"]
+  fc -->|LLM_PROVIDER=groq| groq["GroqChatProvider<br/>gpt-oss-120b · free tier"]
   fc -->|LLM_PROVIDER=anthropic| claude["AnthropicChatProvider<br/>claude-sonnet-5-5 · paid"]
   fe -->|EMBEDDING_PROVIDER=voyage| voyage["VoyageEmbeddingProvider<br/>voyage-4 · 1024 dims · free tokens"]
   fe -->|EMBEDDING_PROVIDER=openai| oai["OpenAIEmbeddingProvider<br/>text-embedding-3-small · 1536"]
