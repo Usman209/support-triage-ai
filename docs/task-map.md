@@ -4,11 +4,11 @@ Status: `[ ]` not started, `[~]` in progress, `[x]` done.
 
 - [x] **0. Skeleton**: monorepo structure, tooling, config loader, placeholders
 - [x] **0b. Starter app**: API `/health` + web shell (ports 3010/3011)
-- [~] **1. Discovery**: `docs/discovery-brief.md` drafted with assumptions; waiting for review and baseline numbers from the CSV
+- [~] **1. Discovery**: `docs/discovery-brief.md` drafted with assumptions; data findings added (CSV labels are random → own labelled test set in task 7)
 - [~] **3. RAG**: ingest knowledge base, chunk + embed into pgvector, retrieval + reranking, cited answers
   - [x] 3.1 Database tables `documents` + `chunks` (vector, HNSW cosine; 1024 dims since 3.2), migrations, `pnpm db:smoke`
   - [x] 3.2 LLM providers: interface + Groq chat / Voyage embeddings (free), Claude + OpenAI ready; `pnpm ai:smoke`
-  - [ ] 3.3 Ingestion: chunk, embed, store (needs files in `data/knowledge-base/`)
+  - [x] 3.3 Ingestion: 16 sample articles → 74 chunks, idempotent + prune; `pnpm ingest`, `pnpm kb:check` (hit@1 16/16)
   - [ ] 3.4 Retrieval + `/chat` API with citations
   - [ ] 3.5 Chat UI
   - [ ] 3.6 Langfuse tracing

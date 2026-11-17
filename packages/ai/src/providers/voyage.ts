@@ -69,6 +69,7 @@ export class VoyageEmbeddingProvider implements EmbeddingProvider {
     for (let attempt = 0; ; attempt++) {
       let status = 0;
       let detail = '';
+      let retryAfterMs: number | undefined;
       try {
         const res = await fetch(`${this.baseUrl}/embeddings`, {
           method: 'POST',
@@ -82,6 +83,8 @@ export class VoyageEmbeddingProvider implements EmbeddingProvider {
         if (res.ok) return (await res.json()) as VoyageResponse;
         status = res.status;
         detail = await res.text();
+        const retryAfter = Number(res.headers.get('retry-after'));
+        if (retryAfter > 0) retryAfterMs = retryAfter * 1000;
       } catch (error) {
         // Network error or timeout: treat like a server error (retryable).
         status = 0;
@@ -92,7 +95,13 @@ export class VoyageEmbeddingProvider implements EmbeddingProvider {
       if (!retryable || attempt >= config.llm.maxRetries) {
         throw new Error(`Voyage embeddings failed (status ${status || 'network'}): ${detail}`);
       }
-      await sleep(500 * 2 ** attempt); // 0.5s, 1s, 2s, ...
+      // Rate limit (429): wait as long as the server asks, or 20s, 40s, ... (free tiers allow only a
+      // few requests per minute). Other errors: short exponential backoff 0.5s, 1s, 2s, ...
+      const waitMs = status === 429 ? (retryAfterMs ?? 20_000 * (attempt + 1)) : 500 * 2 ** attempt;
+      console.warn(
+        `[voyage] ${status || 'network error'}, retrying in ${Math.round(waitMs / 1000)}s`,
+      );
+      await sleep(waitMs);
     }
   }
 }

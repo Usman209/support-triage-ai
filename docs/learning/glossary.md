@@ -55,3 +55,11 @@
 | **Refusal fallback**             | If a model declines for safety reasons, the request is retried on another model.                      |
 | **Query / document embedding**   | Different embedding hints for a search question vs a stored passage.                                  |
 | **Voyage AI / Groq**             | Voyage: embeddings vendor (free tokens). Groq: fast hosting of open models (free tier).               |
+| **Ingestion**                    | Loading source documents into the search index: parse, chunk, embed, store.                           |
+| **Chunk overlap**                | Characters repeated between neighbouring chunks so boundary sentences stay whole.                     |
+| **Contextual header**            | "Title > Section" added to each chunk so it keeps its meaning alone.                                  |
+| **Fingerprint / content hash**   | A hash that changes when the content (or settings) change; used to skip unchanged work.               |
+| **Upsert**                       | Insert a row, or update it if it already exists (by a unique key).                                    |
+| **Prune**                        | Delete index entries whose source no longer exists.                                                   |
+| **hit@k**                        | Share of test questions whose correct document is in the top k results.                               |
+| **Ground truth**                 | Trusted correct answers used to score a system.                                                       |

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 08 RAG Ingestion</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 08</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 08 · Task 3.3</span>
+        <h1>RAG ingestion: chunk, embed, store</h1>
+        <p class="lead">
+          16 help articles became 74 searchable chunks in Postgres. Re-running costs nothing for
+          unchanged files, and deleted files disappear from search.
+        </p>
+      </section>
+
+      <h2>1. The pipeline (pnpm ingest)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  files["data/knowledge-base<br/>16 .md articles"] --> fp{"fingerprint<br/>changed?"}
+  fp -- no --> skip["skip<br/>0 tokens"]
+  fp -- yes --> chunk["chunk<br/>by heading → 800 chars<br/>+100 overlap<br/>+ 'Title > Section'"]
+  chunk --> embed["embed ALL new chunks<br/>in 1 batch<br/>voyage-4 · document"]
+  embed --> tx["per document, 1 transaction:<br/>upsert document<br/>delete old chunks<br/>insert new chunks"]
+  tx --> pg[("Postgres<br/>16 documents · 74 chunks")]
+  files -. "file deleted" .-> prune["prune document<br/>(chunks cascade)"]
+  prune --> pg
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class pg good;
+        </pre>
+      </div>
+
+      <h2>2. How one article is chunked</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart TB
+  art["account-access.md<br/>Can't sign in to your Lumora account"]
+  art --> c0["chunk 0 · intro<br/>Can't sign in to your Lumora account<br/>If you can't sign in…"]
+  art --> c1["chunk 1<br/>… > Reset your password<br/>1. Go to the sign-in page…"]
+  art --> c2["chunk 2<br/>… > Account locked<br/>After 5 failed attempts… 15 minutes"]
+  art --> c3["chunk 3<br/>… > Two-step verification codes"]
+  art --> c4["chunk 4<br/>… > When to contact support"]
+        </pre>
+        <p class="caption">
+          Every chunk starts with "Title > Section". The question "I keep getting locked out"
+          matched <strong>chunk 2</strong> (distance 0.385).
+        </p>
+      </div>
+
+      <h2>3. Run results</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>First run</h3>
+          <p class="caption">added 16 · 74 chunks · 5,127 tokens · 2.7 s</p>
+        </div>
+        <div class="card">
+          <h3>Second run</h3>
+          <p class="caption">unchanged 16 · <strong>0 tokens</strong> · 0.2 s</p>
+        </div>
+        <div class="card">
+          <h3>Delete test</h3>
+          <p class="caption">temp file: added 1 → deleted file → removed 1</p>
+        </div>
+        <div class="card">
+          <h3>Retrieval check</h3>
+          <p class="caption">
+            <span class="badge ok">hit@1 16/16</span> (optimistic: easy, hand-written questions)
+          </p>
+        </div>
+      </div>
+
+      <h2>4. What we learned about the ticket data</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+            <th>Random chance</th>
+            <th>Meaning</th>
+          </tr>
+          <tr>
+            <td>Descriptions with <code>{placeholders}</code></td>
+            <td>100%</td>
+            <td>–</td>
+            <td>Template-generated text</td>
+          </tr>
+          <tr>
+            <td>Subject "Refund request" → type "Refund request"</td>
+            <td><span class="badge bad">21%</span></td>
+            <td>20%</td>
+            <td>Type label is random</td>
+          </tr>
+          <tr>
+            <td>"Data loss" → priority Critical</td>
+            <td><span class="badge bad">26%</span></td>
+            <td>25%</td>
+            <td>Priority label is random</td>
+          </tr>
+        </table>
+        <p class="caption">
+          Decision: don't score the AI against these labels. Build our own labelled test set in task
+          7.
+        </p>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">data/knowledge-base/*.md (16 + README)</span>
+        <span class="file changed">packages/ai/src/rag/chunker.ts</span>
+        <span class="file new">packages/ai/src/rag/ingest.ts</span>
+        <span class="file changed">packages/ai/src/rag/index.ts</span>
+        <span class="file new">packages/ai/scripts/ingest.ts</span>
+        <span class="file new">packages/ai/scripts/kb-check.ts</span>
+        <span class="file changed">packages/ai/src/providers/voyage.ts</span>
+        <span class="file changed">packages/shared/src/config.ts</span>
+        <span class="file changed">packages/db/src/index.ts</span>
+        <span class="file changed">docs/discovery-brief.md</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Ticket CSV in <code>data/knowledge-base/</code>
+        </div>
+        <div class="cause"><span class="label">Cause</span>That folder is committed to git</div>
+        <div class="fix">
+          <span class="label">Fix</span>Moved to <code>data/raw/</code> (gitignored), verified with
+          <code>git check-ignore</code>
+        </div>
+        <div class="lesson">Lesson: customer data in a committed folder = PII on GitHub.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Dataset labels match only at chance level
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Synthetic dataset with random labels
+        </div>
+        <div class="fix"><span class="label">Fix</span>Own labelled test set in task 7</div>
+        <div class="lesson">Lesson: check your data before trusting your metrics.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Risk of 429s on the free embedding tier
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Few requests per minute without a payment method
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>One batched call; wait for <code>Retry-After</code>
+        </div>
+        <div class="lesson">Lesson: design for rate limits.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "Ingestion is idempotent: each document has a fingerprint
+        of its content, embedding model and chunk settings, so unchanged files cost nothing and a
+        model change re-embeds everything. Chunks follow headings, overlap at boundaries and carry a
+        'Title > Section' header, and deleted articles are pruned so answers never cite stale
+        content."
+      </div>
+
+      <div class="pager">
+        <a href="../07-llm-providers/index.html">← Step 07</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/08-rag-ingestion.md">docs/learning/08-rag-ingestion.md</a>
+      </p>
+    </main>
+  </body>
+</html>

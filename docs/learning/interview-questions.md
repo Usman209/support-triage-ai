@@ -85,4 +85,17 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 39. **How do you track LLM cost?** Log tokens per call, multiply by price, aggregate per request/day,
     enforce a budget.
 
+## RAG ingestion (step 08)
+
+40. **How do you choose chunk size?** Precision vs context trade-off; split on structure, add
+    overlap, measure with a retrieval eval.
+41. **Why chunk overlap?** Text cut at a boundary still appears whole in one chunk.
+42. **What is contextual chunking?** Add title/section (or a summary) to each chunk before embedding.
+43. **How do you keep vectors in sync with documents?** Content hashes, upserts by stable id,
+    delete+insert chunks in a transaction, prune deleted documents.
+44. **When must you re-embed everything?** When the embedding model, vector size or chunking changes.
+45. **What is hit@k / recall@k?** Share of test questions with a correct document in the top k.
+46. **Labels turn out to be random. Now what?** Don't evaluate against them; build a trusted
+    labelled set and tell stakeholders.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->
