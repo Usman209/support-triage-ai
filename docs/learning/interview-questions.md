@@ -98,4 +98,15 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 46. **Labels turn out to be random. Now what?** Don't evaluate against them; build a trusted
     labelled set and tell stakeholders.
 
+## RAG answering (step 09)
+
+47. **How do you stop RAG hallucinations?** Relevance filter, answer only from sources, citations,
+    allowed "not found", groundedness evals, human review.
+48. **Why skip the LLM when nothing is relevant?** Any answer would be invented; also saves cost/latency.
+49. **How do you pick top-k and a threshold?** Measure distance distributions, pick a gap, validate
+    with hit@k.
+50. **Prompt injection in RAG?** Treat sources/input as delimited data, limit model powers, validate
+    citations, add detection (task 8).
+51. **Why version prompts?** Compare in evals/traces and roll back.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->

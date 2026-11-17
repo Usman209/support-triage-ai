@@ -1,0 +1,98 @@
+// Grounded answering (the "G" in RAG):
+//   retrieve top-k chunks -> keep relevant ones (distance threshold) -> rerank to top-n
+//   -> prompt the chat model with numbered sources -> parse [n] citations.
+import type { ChatResponse, ChatSource } from '@sta/shared';
+import { config } from '@sta/shared';
+import { getChatProvider } from '../providers';
+import {
+  ANSWER_PROMPT_VERSION,
+  ANSWER_SYSTEM_PROMPT,
+  NOT_FOUND_ANSWER,
+  buildAnswerUserMessage,
+} from '../prompts/answer.prompt';
+import { rerank } from './reranker';
+import { retrieve } from './retriever';
+
+/**
+ * Models don't always follow the citation format exactly. gpt-oss models, for example, sometimes
+ * write 【1】 or 【1†L5-L8】 instead of [1]. Normalise every variant to [n] so parsing and the UI
+ * see one format.
+ */
+function normaliseCitations(text: string): string {
+  return text.replace(/【\s*(\d+)(?:†[^】]*)?\s*】/g, '[$1]');
+}
+
+/** Citation numbers like [1] or [2][3] that point at a provided source. */
+function citedIds(text: string, max: number): number[] {
+  const ids = new Set<number>();
+  for (const match of text.matchAll(/\[(\d+)\]/g)) {
+    const id = Number(match[1]);
+    if (id >= 1 && id <= max) ids.add(id);
+  }
+  return [...ids].sort((a, b) => a - b);
+}
+
+export async function answerQuestion(question: string): Promise<ChatResponse> {
+  const started = Date.now();
+
+  // 1. Retrieve, then drop chunks that are too far away to be relevant.
+  const retrieval = await retrieve(question);
+  const relevant = retrieval.chunks.filter((c) => c.distance <= config.rag.maxDistance);
+  const top = rerank(relevant);
+
+  const sources: ChatSource[] = top.map((c, i) => ({
+    id: i + 1,
+    title: c.title,
+    section: c.section,
+    source: c.source,
+    distance: Number(c.distance.toFixed(3)),
+    content: c.content,
+  }));
+
+  const base = {
+    promptVersion: ANSWER_PROMPT_VERSION,
+    sources,
+    usage: { inputTokens: 0, outputTokens: 0, embeddingTokens: retrieval.embeddingTokens },
+  };
+
+  // 2. Nothing relevant: answer "not found" without calling the LLM (no cost, no hallucination).
+  if (sources.length === 0) {
+    return {
+      ...base,
+      answer: NOT_FOUND_ANSWER,
+      answered: false,
+      citations: [],
+      model: null,
+      timings: { retrievalMs: retrieval.latencyMs, generationMs: 0, totalMs: Date.now() - started },
+    };
+  }
+
+  // 3. Ask the model to answer from the numbered sources only.
+  const result = await getChatProvider().chat({
+    tier: 'chat',
+    system: ANSWER_SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: buildAnswerUserMessage(question, sources) }],
+  });
+
+  const answer = normaliseCitations(result.text.trim()) || NOT_FOUND_ANSWER;
+  const notFound = answer.includes(NOT_FOUND_ANSWER) || result.refused;
+  const ids = notFound ? [] : citedIds(answer, sources.length);
+
+  return {
+    ...base,
+    answer,
+    answered: !notFound,
+    citations: sources.filter((s) => ids.includes(s.id)),
+    model: result.model,
+    usage: {
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens,
+      embeddingTokens: retrieval.embeddingTokens,
+    },
+    timings: {
+      retrievalMs: retrieval.latencyMs,
+      generationMs: result.latencyMs,
+      totalMs: Date.now() - started,
+    },
+  };
+}

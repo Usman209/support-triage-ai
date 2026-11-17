@@ -94,6 +94,7 @@ const envSchema = z.object({
   RAG_CHUNK_OVERLAP: int(),
   RAG_TOP_K: int(),
   RAG_RERANK_TOP_N: int(),
+  RAG_MAX_DISTANCE: z.preprocess(blankToUndefined, z.coerce.number().min(0).max(2)),
   RAG_RERANKER: z.enum(['none', 'cohere', 'local']),
   COHERE_API_KEY: optionalString(),
   KNOWLEDGE_BASE_DIR: requiredString(),
@@ -191,6 +192,7 @@ export const config = Object.freeze({
     chunkOverlap: env.RAG_CHUNK_OVERLAP,
     topK: env.RAG_TOP_K,
     rerankTopN: env.RAG_RERANK_TOP_N,
+    maxDistance: env.RAG_MAX_DISTANCE,
     reranker: env.RAG_RERANKER,
     cohereApiKey: env.COHERE_API_KEY,
     /** Absolute path of the knowledge-base folder. */

@@ -9,7 +9,7 @@ Status: `[ ]` not started, `[~]` in progress, `[x]` done.
   - [x] 3.1 Database tables `documents` + `chunks` (vector, HNSW cosine; 1024 dims since 3.2), migrations, `pnpm db:smoke`
   - [x] 3.2 LLM providers: interface + Groq chat / Voyage embeddings (free), Claude + OpenAI ready; `pnpm ai:smoke`
   - [x] 3.3 Ingestion: 16 sample articles → 74 chunks, idempotent + prune; `pnpm ingest`, `pnpm kb:check` (hit@1 16/16)
-  - [ ] 3.4 Retrieval + `/chat` API with citations
+  - [x] 3.4 Retrieval + `POST /chat` with citations, "not found" threshold (RAG_MAX_DISTANCE=0.70), versioned prompt
   - [ ] 3.5 Chat UI
   - [ ] 3.6 Langfuse tracing
 - [ ] **4. Agent**: approval-gated triage agent, tool registry, approval queue UI and API
