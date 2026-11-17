@@ -35,6 +35,9 @@ Read the steps in order. Each step file has the same sections:
 **Visual version:** open [docs/visual/index.html](../visual/index.html) in a browser for diagrams of
 each step (see the picture first, then read the text here).
 
+**Full request flow:** [end-to-end-flow.md](end-to-end-flow.md) explains everything that happens
+from pressing "Ask" to the answer on screen (with real timings and payloads).
+
 ## Shared files
 
 - [problems-and-fixes.md](problems-and-fixes.md): every problem in one table (good for quick revision)
