@@ -95,3 +95,286 @@ main {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
+
+/* ---------- Chat (task 3.5) ---------- */
+:root {
+  --accent-soft: #eef0ff;
+  --warn: #a15c07;
+  --warn-soft: #fdf3e2;
+  --bad-soft: #fdecea;
+  --surface-2: #f1f3f7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent-soft: #23264a;
+    --warn: #fbbf24;
+    --warn-soft: #33270e;
+    --bad-soft: #3a1717;
+    --surface-2: #1e222b;
+  }
+}
+
+/* The chat needs more room than other pages: widen <main> only when it contains the chat. */
+main:has(.chat-layout) {
+  max-width: 1180px;
+}
+
+.chat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 140px);
+}
+
+.chat-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.chat-header p {
+  margin: 0 0 1rem;
+}
+
+.chat-log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.chat-empty .examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.5rem;
+}
+
+.example {
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+}
+
+.example:hover {
+  border-color: var(--accent);
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bubble {
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  max-width: 90%;
+  border: 1px solid var(--border);
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.bubble.assistant {
+  align-self: flex-start;
+  background: var(--surface);
+}
+
+.bubble.not-found {
+  background: var(--warn-soft);
+  border-color: var(--warn);
+}
+
+.bubble.error {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+}
+
+.not-found-label {
+  color: var(--warn);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.loading .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 0.4rem;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.answer-text p,
+.answer-text ol,
+.answer-text ul {
+  margin: 0 0 0.5rem;
+}
+
+.answer-text ol,
+.answer-text ul {
+  padding-left: 1.25rem;
+}
+
+.cite {
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: super;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+  margin: 0 0.1rem;
+  cursor: pointer;
+}
+
+.source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  cursor: pointer;
+}
+
+.chip.cited {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.chip.open {
+  background: var(--accent-soft);
+}
+
+.meta {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.chat-input {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  background: var(--bg);
+}
+
+.chat-input textarea {
+  flex: 1;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+}
+
+.chat-input button {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 0 1.25rem;
+  cursor: pointer;
+}
+
+.chat-input button:disabled,
+.chat-input textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.source-panel {
+  position: sticky;
+  top: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.source-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.source-head h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.source-head p {
+  margin: 0.1rem 0 0;
+}
+
+.badge-id {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.source-content {
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.small {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+  .source-panel {
+    position: static;
+    max-height: none;
+  }
+}

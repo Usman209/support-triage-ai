@@ -100,6 +100,19 @@ New problems are added at the bottom of each step's section as we build.
 | 46  | Citations empty although answer cited           | gpt-oss wrote 【1】 not [1]   | Normalise citation variants                            | Test with the real model; normalise outputs |
 | 47  | Answers contain **bold** Markdown               | Model formatting              | Render Markdown in the UI (step 10)                    | Decide how to display model output          |
 
+## Step 10: Chat UI
+
+| #   | Symptom                               | Cause                                        | Fix                                        | Lesson                                   |
+| --- | ------------------------------------- | -------------------------------------------- | ------------------------------------------ | ---------------------------------------- |
+| 48  | Browser → API needs CORS              | Different ports/origins                      | Next.js /api/chat proxy                    | BFF avoids CORS, hides internal URLs     |
+| 49  | Model output could contain HTML       | LLM text is untrusted                        | Render as React elements only              | Treat model output like user input (XSS) |
+| 50  | Source panel raw **bold**, hard wraps | Stored chunk text shown as-is                | Safe renderer with softWrap                | Format stored text for humans            |
+| 51  | Echo setup → "not found"              | Prompt v1 over-refusal on generic article    | Prompt answer-v2 + 5-case regression       | Test both hallucination and over-refusal |
+| 52  | One answer 24 s                       | Voyage 429, retry waited 20 s                | Query-embedding LRU cache                  | Retries cost latency; caches avoid calls |
+| 53  | 400 px screenshots cut off            | Headless browser min width + transform trick | main:has(.chat-layout); verify in DevTools | Know your test tool limits               |
+| 54  | Headless Edge hung                    | Two instances at once                        | One at a time with timeout                 | Timeouts on external tools               |
+| 55  | eslint-disable for missing rule       | react-hooks plugin not installed             | Removed comment                            | Disable comments must name real rules    |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

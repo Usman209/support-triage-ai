@@ -10,7 +10,7 @@ Status: `[ ]` not started, `[~]` in progress, `[x]` done.
   - [x] 3.2 LLM providers: interface + Groq chat / Voyage embeddings (free), Claude + OpenAI ready; `pnpm ai:smoke`
   - [x] 3.3 Ingestion: 16 sample articles → 74 chunks, idempotent + prune; `pnpm ingest`, `pnpm kb:check` (hit@1 16/16)
   - [x] 3.4 Retrieval + `POST /chat` with citations, "not found" threshold (RAG_MAX_DISTANCE=0.70), versioned prompt
-  - [ ] 3.5 Chat UI
+  - [x] 3.5 Chat UI at /chat: citations, source panel, not-found state; prompt answer-v2; query-embedding cache
   - [ ] 3.6 Langfuse tracing
 - [ ] **4. Agent**: approval-gated triage agent, tool registry, approval queue UI and API
 - [ ] **7. Evals**: promptfoo datasets and assertions, CI eval step

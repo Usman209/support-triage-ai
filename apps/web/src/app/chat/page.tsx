@@ -1,9 +1,13 @@
-// TODO task 3: agent chat UI showing RAG answers with source citations.
-export default function ChatPage() {
-  return (
-    <div className="card">
-      <h1>Chat</h1>
-      <p className="muted">Coming in task 3: answers from the knowledge base, with sources.</p>
-    </div>
-  );
+// Chat page (task 3.5). Server component: reads ?q= and hands it to the client chat panel.
+import { ChatPanel } from '@/components/chat/chat-panel';
+
+export const metadata = { title: 'Chat · Support Triage AI' };
+
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  return <ChatPanel initialQuestion={q} />;
 }
