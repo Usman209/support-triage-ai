@@ -1,4 +1,5 @@
 // Retriever: question -> query embedding -> nearest chunks in Postgres (pgvector).
+import { startActiveObservation } from '@langfuse/tracing';
 import { config } from '@sta/shared';
 import { getDb, sql } from '@sta/db';
 import { getEmbeddingProvider } from '../providers';
@@ -46,10 +47,35 @@ async function embedQuery(question: string): Promise<{ vector: number[]; tokens:
   return { vector, tokens: usage.inputTokens };
 }
 
-export async function retrieve(
+/** Traced as a Langfuse "retriever" observation (the query embedding is a child observation). */
+export function retrieve(
   question: string,
   topK: number = config.rag.topK,
 ): Promise<RetrievalResult> {
+  return startActiveObservation(
+    'retrieve',
+    async (observation) => {
+      observation.update({ input: question, metadata: { topK } });
+      const result = await searchChunks(question, topK);
+      observation.update({
+        output: result.chunks.map((c) => ({
+          title: c.title,
+          section: c.section,
+          distance: Number(c.distance.toFixed(3)),
+        })),
+        metadata: {
+          topK,
+          cacheHit: result.embeddingTokens === 0,
+          latencyMs: result.latencyMs,
+        },
+      });
+      return result;
+    },
+    { asType: 'retriever' },
+  );
+}
+
+async function searchChunks(question: string, topK: number): Promise<RetrievalResult> {
   const started = Date.now();
   const query = await embedQuery(question);
   const vector = `[${query.vector.join(',')}]`;

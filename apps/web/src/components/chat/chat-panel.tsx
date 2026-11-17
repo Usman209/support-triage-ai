@@ -162,6 +162,14 @@ export function ChatPanel({ initialQuestion }: { initialQuestion?: string }) {
                     {turn.response.model ?? 'no LLM call'} · {turn.response.usage.inputTokens}/
                     {turn.response.usage.outputTokens} tokens · {turn.response.timings.totalMs} ms ·{' '}
                     {turn.response.promptVersion}
+                    {turn.response.traceUrl && (
+                      <>
+                        {' · '}
+                        <a href={turn.response.traceUrl} target="_blank" rel="noreferrer">
+                          view trace ↗
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

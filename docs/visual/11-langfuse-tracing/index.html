@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 11 Langfuse Tracing</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 11</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 11 · Task 3.6</span>
+        <h1>Langfuse tracing</h1>
+        <p class="lead">
+          Every chat request becomes a trace in Langfuse Cloud: retrieval, embedding, the exact
+          prompt, the answer, tokens and time for each step.
+        </p>
+      </section>
+
+      <h2>1. One real trace</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart TB
+  t["trace rag-chat<br/>tags: rag · answer-v2"] --> c["CHAIN rag-answer<br/>2908 ms"]
+  c --> r["RETRIEVER retrieve<br/>2020 ms · 8 chunks"]
+  r --> e["EMBEDDING embed.voyage<br/>1515 ms · 12 tokens"]
+  c --> g["GENERATION llm.groq<br/>839 ms · 687 in / 70 out"]
+  classDef slow fill:#fdf3e2,stroke:#a15c07,color:#3a2504;
+  classDef fast fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class e slow;
+  class g fast;
+        </pre>
+        <p class="caption">
+          Surprise from real data: the embedding call (1.5 s) was slower than the LLM (0.8 s).
+          That's why the query cache matters.
+        </p>
+      </div>
+
+      <h2>2. Who records, who exports</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  subgraph lib["@sta/ai (records)"]
+    a["answerQuestion<br/>chain"] --> rt["retrieve<br/>retriever"]
+    a --> d1["traced chat provider<br/>generation"]
+    rt --> d2["traced embedding provider<br/>embedding"]
+  end
+  subgraph app["apps/api (exports)"]
+    i["instrumentation.ts<br/>NodeTracerProvider"] --> p["LangfuseSpanProcessor<br/>batched export"]
+  end
+  lib -. "OpenTelemetry spans" .-> i
+  p --> lf["Langfuse Cloud"]
+  s["scripts (ingest, kb:check)<br/>no tracer = no-op"] -.-> lib
+        </pre>
+      </div>
+
+      <h2>3. What you can do with traces</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Debug a bad answer</h3>
+          <p class="caption">
+            Click "view trace ↗" in the chat, open <code>llm.groq</code>, read the exact prompt and
+            sources.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Find knowledge gaps</h3>
+          <p class="caption">
+            Filter level <span class="badge warn">WARNING</span> = "not found" questions.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Find slow steps</h3>
+          <p class="caption">Timing per observation: retrieval vs LLM.</p>
+        </div>
+        <div class="card">
+          <h3>Compare prompts</h3>
+          <p class="caption">
+            Every trace is tagged with the prompt version (<code>answer-v2</code>).
+          </p>
+        </div>
+      </div>
+
+      <h2>4. When the backend is down</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant A as API
+  participant L as Langfuse
+  U->>A: question
+  A-->>U: answer (always)
+  A--xL: export spans (Langfuse unreachable)
+  Note over A,L: trace lost, request unaffected (best effort)
+  U->>A: next question
+  A-->>U: answer
+  A->>L: export spans
+  L-->>A: ok, trace visible
+        </pre>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">apps/api/src/instrumentation.ts</span>
+        <span class="file changed">apps/api/src/index.ts</span>
+        <span class="file new">packages/ai/src/providers/traced.ts</span>
+        <span class="file changed">packages/ai/src/providers/index.ts</span>
+        <span class="file changed">packages/ai/src/rag/retriever.ts</span>
+        <span class="file changed">packages/ai/src/rag/answer.ts</span>
+        <span class="file changed">packages/shared/src/schemas/chat.ts</span>
+        <span class="file changed">apps/web/src/components/chat/chat-panel.tsx</span>
+        <span class="file changed">package.json · .nvmrc · ci.yml (Node 22)</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>First trace never arrived</div>
+        <div class="cause">
+          <span class="label">Cause</span>Langfuse Cloud briefly unreachable (DNS, timeout)
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Waited for health 200, new request arrived
+        </div>
+        <div class="lesson">Lesson: tracing is best-effort and must never break requests.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>Langfuse API 410 Gone</div>
+        <div class="cause">
+          <span class="label">Cause</span>Old traces endpoint removed 2026-11-16
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span><code>/api/public/v2/observations</code>
+        </div>
+        <div class="lesson">Lesson: read the error body; it named the replacement.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>"view trace" link missing</div>
+        <div class="cause">
+          <span class="label">Cause</span>Dev server served an old bundle (watcher missed the edit)
+        </div>
+        <div class="fix"><span class="label">Fix</span>Restarted <code>pnpm dev:web</code></div>
+        <div class="lesson">Lesson: check what the server actually serves.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>SDK needs Node 22</div>
+        <div class="cause"><span class="label">Cause</span>OpenTelemetry-based SDK</div>
+        <div class="fix"><span class="label">Fix</span>engines, .nvmrc, CI → 22</div>
+        <div class="lesson">Lesson: check requirements before adding dependencies.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "The AI layer records OpenTelemetry observations: a chain
+        per request, a retriever, and decorators that trace every embedding and LLM call with model,
+        tokens and latency. The API exports them to Langfuse in the background, so tracing never
+        blocks a request. The first trace showed retrieval, not the LLM, was the bottleneck."
+      </div>
+
+      <div class="pager">
+        <a href="../10-chat-ui/index.html">← Step 10</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/11-langfuse-tracing.md">docs/learning/11-langfuse-tracing.md</a>
+      </p>
+    </main>
+  </body>
+</html>

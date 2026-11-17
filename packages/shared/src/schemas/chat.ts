@@ -36,4 +36,8 @@ export interface ChatResponse {
   promptVersion: string;
   usage: { inputTokens: number; outputTokens: number; embeddingTokens: number };
   timings: { retrievalMs: number; generationMs: number; totalMs: number };
+  /** Langfuse trace id for this request (null when tracing is off). Search it in Langfuse. */
+  traceId: string | null;
+  /** Link to this trace in Langfuse (null when tracing is off or LANGFUSE_PROJECT_ID is unset). */
+  traceUrl: string | null;
 }

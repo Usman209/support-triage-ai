@@ -28,7 +28,7 @@ measured with **evals** and **observability** from day one.
 
 ## Requirements
 
-- Node.js 20.12+ and pnpm 10 (`corepack enable`)
+- Node.js 22+ and pnpm 10 (Langfuse tracing needs Node 22) (`corepack enable`)
 - Docker (for local Postgres and MinIO)
 - A [Langfuse Cloud](https://cloud.langfuse.com) project for tracing (keys go in `.env`)
 - Python 3.11+ (only for `services/`)

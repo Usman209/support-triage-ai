@@ -1,6 +1,7 @@
 // Grounded answering (the "G" in RAG):
 //   retrieve top-k chunks -> keep relevant ones (distance threshold) -> rerank to top-n
 //   -> prompt the chat model with numbered sources -> parse [n] citations.
+import { propagateAttributes, startActiveObservation } from '@langfuse/tracing';
 import type { ChatResponse, ChatSource } from '@sta/shared';
 import { config } from '@sta/shared';
 import { getChatProvider } from '../providers';
@@ -32,7 +33,65 @@ function citedIds(text: string, max: number): number[] {
   return [...ids].sort((a, b) => a - b);
 }
 
-export async function answerQuestion(question: string): Promise<ChatResponse> {
+/** OpenTelemetry uses an all-zero trace id when tracing is off. */
+const NO_TRACE = /^0+$/;
+
+/**
+ * Answer a question from the knowledge base. Traced in Langfuse as one trace ("rag-chat") with a
+ * root "chain" observation; retrieval, embedding and the LLM call appear as child observations.
+ */
+export function answerQuestion(question: string): Promise<ChatResponse> {
+  return propagateAttributes(
+    {
+      traceName: 'rag-chat',
+      tags: ['rag', ANSWER_PROMPT_VERSION],
+      metadata: { promptVersion: ANSWER_PROMPT_VERSION },
+    },
+    () =>
+      startActiveObservation(
+        'rag-answer',
+        async (observation): Promise<ChatResponse> => {
+          observation.update({ input: { question } });
+          try {
+            const response = await runAnswer(question);
+            observation.update({
+              output: {
+                answer: response.answer,
+                answered: response.answered,
+                citations: response.citations.map((c) => `[${c.id}] ${c.title} > ${c.section}`),
+              },
+              // WARNING makes "not found" answers easy to filter in Langfuse.
+              level: response.answered ? 'DEFAULT' : 'WARNING',
+              metadata: {
+                promptVersion: response.promptVersion,
+                sources: response.sources.length,
+                llmCalled: response.model !== null,
+                timings: response.timings,
+              },
+            });
+            const traceId = NO_TRACE.test(observation.traceId) ? null : observation.traceId;
+            return { ...response, traceId, traceUrl: traceLink(traceId) };
+          } catch (error) {
+            observation.update({
+              level: 'ERROR',
+              statusMessage: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
+          }
+        },
+        { asType: 'chain' },
+      ),
+  );
+}
+
+/** Deep link to the trace in the Langfuse UI. */
+function traceLink(traceId: string | null): string | null {
+  const { langfuseHost, langfuseProjectId } = config.observability;
+  if (!traceId || !langfuseHost || !langfuseProjectId) return null;
+  return `${langfuseHost.replace(/\/$/, '')}/project/${langfuseProjectId}/traces/${traceId}`;
+}
+
+async function runAnswer(question: string): Promise<Omit<ChatResponse, 'traceId' | 'traceUrl'>> {
   const started = Date.now();
 
   // 1. Retrieve, then drop chunks that are too far away to be relevant.

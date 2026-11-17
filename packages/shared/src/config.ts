@@ -113,6 +113,8 @@ const envSchema = z.object({
   LANGFUSE_PUBLIC_KEY: optionalString(),
   LANGFUSE_SECRET_KEY: optionalString(),
   LANGFUSE_HOST: optionalUrl(),
+  LANGFUSE_TRACING_ENABLED: bool(),
+  LANGFUSE_PROJECT_ID: optionalString(),
   OTEL_EXPORTER_OTLP_ENDPOINT: optionalUrl(),
   OTEL_SERVICE_NAME: requiredString(),
 
@@ -214,6 +216,8 @@ export const config = Object.freeze({
     langfusePublicKey: env.LANGFUSE_PUBLIC_KEY,
     langfuseSecretKey: env.LANGFUSE_SECRET_KEY,
     langfuseHost: env.LANGFUSE_HOST,
+    langfuseTracingEnabled: env.LANGFUSE_TRACING_ENABLED,
+    langfuseProjectId: env.LANGFUSE_PROJECT_ID,
     otelExporterEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
     otelServiceName: env.OTEL_SERVICE_NAME,
   },
