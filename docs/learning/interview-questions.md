@@ -70,4 +70,19 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 32. **Why migrations?** Reproducible, reviewed, ordered schema changes with history.
 33. **Why cascade delete chunks?** Deleted articles must not be retrievable; stale chunks cause wrong answers.
 
+## LLM providers (step 07)
+
+34. **Why an interface over LLM vendors?** No lock-in, switch on price/quality/outage, fakes in
+    tests, different vendors per task. We switched both vendors without touching callers.
+35. **Which errors do you retry?** 429 rate limits, timeouts, 5xx, network: exponential backoff
+    with a cap. Never 400/401/403/404 or billing/quota errors.
+36. **Temperature vs effort?** Temperature = randomness of token choice. Effort (Claude) = how much
+    the model thinks: quality vs tokens and latency.
+37. **Query vs document embeddings?** Asymmetric retrieval: different hints for short questions and
+    long passages so questions land near the passages that answer them.
+38. **Risks of free tiers?** Rate limits, changing terms, possible training on your data: fine for
+    public docs, not for customer PII without an agreement.
+39. **How do you track LLM cost?** Log tokens per call, multiply by price, aggregate per request/day,
+    enforce a budget.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->

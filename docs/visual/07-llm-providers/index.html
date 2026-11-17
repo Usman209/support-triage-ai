@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 07 LLM Providers</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 07</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 07 · Task 3.2</span>
+        <h1>LLM providers: chat + embeddings</h1>
+        <p class="lead">
+          One interface for "ask a model" and "turn text into vectors". The vendor is chosen in
+          <code>.env</code>, so the rest of the app never imports a vendor SDK.
+        </p>
+      </section>
+
+      <h2>1. The provider interface (adapter pattern)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  callers["RAG · agent · API<br/>(later steps)"] --> fc["getChatProvider()"]
+  callers --> fe["getEmbeddingProvider()"]
+  fc -->|LLM_PROVIDER=groq| groq["GroqChatProvider<br/>llama-3.3-70b · free tier"]
+  fc -->|LLM_PROVIDER=anthropic| claude["AnthropicChatProvider<br/>claude-sonnet-5-5 · paid"]
+  fe -->|EMBEDDING_PROVIDER=voyage| voyage["VoyageEmbeddingProvider<br/>voyage-4 · 1024 dims · free tokens"]
+  fe -->|EMBEDDING_PROVIDER=openai| oai["OpenAIEmbeddingProvider<br/>text-embedding-3-small · 1536"]
+  classDef active fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  classDef idle fill:#eef0f4,stroke:#9aa1ad,color:#3a3f4a,stroke-dasharray:4 3;
+  class groq,voyage active;
+  class claude,oai idle;
+        </pre>
+        <p class="caption">
+          <span class="badge ok">green = active now (free)</span>
+          <span class="badge todo">dashed = ready, switch in .env (needs credit)</span>
+        </p>
+      </div>
+
+      <h2>2. Why we switched vendors in the middle of the step</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  t["pnpm ai:smoke"] --> e1["OpenAI embeddings"]
+  t --> c1["Claude chat"]
+  e1 -->|"429 credit_balance_exhausted"| x1["billing, not rate limit"]
+  c1 -->|"400 credit balance too low"| x2["billing"]
+  x1 --> v["Voyage AI (free tokens)"]
+  x2 --> g["Groq (free tier)"]
+  v --> ok["Same interface,<br/>no caller changed ✔"]
+  g --> ok
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class x1,x2 bad;
+  class ok good;
+        </pre>
+      </div>
+
+      <h2>3. Which errors to retry</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Error</th>
+            <th>Meaning</th>
+            <th>Retry?</th>
+          </tr>
+          <tr>
+            <td>429 rate limit</td>
+            <td>Too many requests right now</td>
+            <td><span class="badge ok">Yes, with backoff</span></td>
+          </tr>
+          <tr>
+            <td>5xx / timeout / network</td>
+            <td>Temporary server or network problem</td>
+            <td><span class="badge ok">Yes, with backoff</span></td>
+          </tr>
+          <tr>
+            <td>429 <code>insufficient_quota</code></td>
+            <td>No credit (billing)</td>
+            <td><span class="badge bad">No</span></td>
+          </tr>
+          <tr>
+            <td>400</td>
+            <td>Bad request (e.g. temperature on Claude 5.x, low credit)</td>
+            <td><span class="badge bad">No</span></td>
+          </tr>
+          <tr>
+            <td>401 / 403</td>
+            <td>Bad key / no permission</td>
+            <td><span class="badge bad">No</span></td>
+          </tr>
+        </table>
+        <p class="caption">
+          Backoff in <code>voyage.ts</code>: 0.5 s → 1 s → 2 s, up to <code>LLM_MAX_RETRIES</code>.
+        </p>
+      </div>
+
+      <h2>4. Query vs document embeddings</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  q["User question<br/>'I forgot my password'"] -->|"embed(..., inputType: 'query')"| qv(("query vector"))
+  d1["'How do I reset my password?'"] -->|"inputType: 'document'"| dv1(("doc vector"))
+  d2["'I want a refund'"] -->|"inputType: 'document'"| dv2(("doc vector"))
+  qv -. "high similarity" .-> dv1
+  qv -. "low similarity" .-> dv2
+        </pre>
+        <p class="caption">
+          Voyage adds a retrieval hint per type, so short questions land close to the passages that
+          answer them. Run <code>pnpm ai:smoke</code> to see the numbers.
+        </p>
+      </div>
+
+      <h2>5. Claude settings that changed (API drift)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>No temperature</h3>
+          <p class="caption">
+            Current Claude models reject it (400). Only open models get
+            <code>LLM_TEMPERATURE</code>.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Effort</h3>
+          <p class="caption">
+            <code>LLM_EFFORT</code> low → max: how much the model thinks. Quality vs cost and
+            latency.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Thinking uses tokens</h3>
+          <p class="caption">
+            <code>LLM_MAX_OUTPUT_TOKENS</code> 1024 → 4096 so answers aren't cut off.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Refusal fallback</h3>
+          <p class="caption">
+            <code>fallbacks: 'default'</code>: a safety-declined request is retried on another
+            model.
+          </p>
+        </div>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">packages/ai/src/providers/types.ts</span>
+        <span class="file changed">packages/ai/src/providers/anthropic.ts</span>
+        <span class="file new">packages/ai/src/providers/groq.ts</span>
+        <span class="file new">packages/ai/src/providers/voyage.ts</span>
+        <span class="file changed">packages/ai/src/providers/openai.ts</span>
+        <span class="file changed">packages/ai/src/providers/index.ts</span>
+        <span class="file new">packages/ai/scripts/smoke.ts</span>
+        <span class="file new">packages/db/migrations/0002_embedding_dims_1024.sql</span>
+        <span class="file changed">packages/shared/src/config.ts</span>
+        <span class="file changed">.env.example</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>OpenAI 429 <code>credit_balance_exhausted</code>
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>No credit: a billing error, not a rate limit
+        </div>
+        <div class="fix"><span class="label">Fix</span>Embeddings via Voyage (free tokens)</div>
+        <div class="lesson">
+          Lesson: read the error code. The SDK even retried it, which can't help.
+        </div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Anthropic 400 "credit balance is too low"
+        </div>
+        <div class="cause"><span class="label">Cause</span>No credit (keys were valid: no 401)</div>
+        <div class="fix"><span class="label">Fix</span>Chat via Groq free tier for now</div>
+        <div class="lesson">Lesson: the provider interface made the switch a config change.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>Chat test never ran</div>
+        <div class="cause">
+          <span class="label">Cause</span>First failing test stopped the script
+        </div>
+        <div class="fix"><span class="label">Fix</span>Run and report each test separately</div>
+        <div class="lesson">Lesson: one failure must not hide other results.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span><code>db:smoke</code> had 1536 hardcoded
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Broke the "settings only in .env" rule
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Use <code>config.llm.embeddingDimensions</code>
+        </div>
+        <div class="lesson">Lesson: hardcoded values hide until something changes.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "Our code depends on a small provider interface, not on a
+        vendor. When both paid accounts ran out of credit, we added Voyage for embeddings and Groq
+        for chat in one step without touching any caller. Switching back to Claude is a
+        <code>.env</code> change."
+      </div>
+
+      <div class="pager">
+        <a href="../06-rag-schema/index.html">← Step 06</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/07-llm-providers.md">docs/learning/07-llm-providers.md</a>
+      </p>
+    </main>
+  </body>
+</html>

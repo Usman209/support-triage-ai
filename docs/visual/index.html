@@ -36,8 +36,8 @@ flowchart LR
   agent([Support agent]) --> web["Web app<br/>Next.js :3010"]
   web --> api["API<br/>Hono :3011"]
   api --> ai["AI layer<br/>packages/ai"]
-  ai --> llm[("LLM<br/>Claude")]
-  ai --> emb[("Embeddings<br/>OpenAI")]
+  ai --> llm[("Chat LLM<br/>Groq now · Claude later")]
+  ai --> emb[("Embeddings<br/>Voyage AI")]
   ai --> pg[("PostgreSQL 18<br/>+ pgvector")]
   api --> pg
   api --> appr["Approval queue"]
@@ -46,8 +46,8 @@ flowchart LR
   api -. traces .-> lf["Langfuse Cloud"]
   classDef done fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
   classDef todo fill:#eef0f4,stroke:#9aa1ad,color:#3a3f4a,stroke-dasharray:4 3;
-  class web,api,pg,minio,lf done;
-  class ai,llm,emb,appr,tix todo;
+  class web,api,pg,minio,lf,ai,llm,emb done;
+  class appr,tix todo;
         </pre>
         <p class="caption">
           <span class="badge ok">green = running now</span>
@@ -92,11 +92,11 @@ flowchart LR
           <p>documents + chunks + vector(1536), HNSW index, migrations.</p>
           <span class="badge ok">Done</span>
         </a>
-        <div class="step disabled">
+        <a class="step" href="07-llm-providers/index.html">
           <span class="num">07</span> <strong>Task 3.2: LLM providers</strong>
-          <p>Claude for chat, OpenAI for embeddings, behind one interface.</p>
-          <span class="badge todo">Next</span>
-        </div>
+          <p>One interface; Groq chat + Voyage embeddings (free), Claude ready.</p>
+          <span class="badge ok">Done</span>
+        </a>
         <div class="step disabled">
           <span class="num">08+</span> <strong>Task 3.3–3.6</strong>
           <p>Ingestion, retrieval + /chat, chat UI, tracing.</p>
