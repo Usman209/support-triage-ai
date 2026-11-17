@@ -65,6 +65,19 @@ New problems are added at the bottom of each step's section as we build.
 | 26  | Notice: extension "vector" already exists               | pgvector already enabled in that DB                                        | None: `IF NOT EXISTS`                                                      | Migrations must be safe on non-empty databases                    |
 | 27  | Test script: top-level await not supported (cjs)        | Script outside the project                                                 | Moved into repo as `pnpm db:smoke`                                         | Keep useful checks in the repo                                    |
 
+## Step 07: LLM providers
+
+| #   | Symptom                                       | Cause                                 | Fix                                                     | Lesson                                          |
+| --- | --------------------------------------------- | ------------------------------------- | ------------------------------------------------------- | ----------------------------------------------- |
+| 28  | `temperature` would 400 on Claude             | Current Claude models reject it       | Send `effort` instead; temperature only for open models | APIs drift; check current docs                  |
+| 29  | 1024 max tokens too low                       | Thinking counts toward the limit      | 4096                                                    | Budget for thinking + answer                    |
+| 30  | OpenAI `429 credit_balance_exhausted`         | No credit (billing), not a rate limit | Voyage embeddings (free tokens)                         | Read the error code; don't retry billing errors |
+| 31  | Anthropic `400 credit balance too low`        | No credit; keys valid (no 401)        | Groq chat (free tier)                                   | Provider interface = config switch              |
+| 32  | Chat test never ran                           | First failure stopped the script      | Run/report each test separately                         | Tests must not hide each other                  |
+| 33  | Vector size 1536 → 1024                       | Voyage model size                     | Migration 0002                                          | New embedding model = migration + re-embed      |
+| 34  | `db:smoke` had 1536 hardcoded                 | Broke "settings only in .env"         | Read from config                                        | Hardcoded values hide until change              |
+| 35  | Voyage response format missing from main docs | Docs split across pages               | Read the API reference                                  | Verify field names at the source                |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

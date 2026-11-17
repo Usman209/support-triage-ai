@@ -2,12 +2,13 @@
 // delete. Everything runs inside a transaction that is rolled back, so no data is kept.
 // Usage: pnpm db:smoke
 import { sql } from 'drizzle-orm';
+import { config } from '@sta/shared';
 import { chunks, closeDb, documents, getDb } from '../src/index';
 
 class Rollback extends Error {}
 
 const db = getDb();
-const dims = 1536;
+const dims = config.llm.embeddingDimensions; // from .env, same as the vector column
 const vec = (fill: (i: number) => number) => Array.from({ length: dims }, (_, i) => fill(i));
 
 async function main() {
@@ -42,7 +43,7 @@ async function main() {
           documentId: doc.id,
           chunkIndex: 2,
           content: 'Change your email address',
-          embedding: vec((i) => (i < 1200 ? 1 : 0)),
+          embedding: vec((i) => (i < dims * 0.8 ? 1 : 0)),
         },
       ]);
 

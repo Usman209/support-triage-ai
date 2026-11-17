@@ -6,8 +6,8 @@ Status: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] **0b. Starter app**: API `/health` + web shell (ports 3010/3011)
 - [~] **1. Discovery**: `docs/discovery-brief.md` drafted with assumptions; waiting for review and baseline numbers from the CSV
 - [~] **3. RAG**: ingest knowledge base, chunk + embed into pgvector, retrieval + reranking, cited answers
-  - [x] 3.1 Database tables `documents` + `chunks` (vector(1536), HNSW cosine), migrations, `pnpm db:smoke`
-  - [ ] 3.2 LLM providers (Claude chat, OpenAI embeddings)
+  - [x] 3.1 Database tables `documents` + `chunks` (vector, HNSW cosine; 1024 dims since 3.2), migrations, `pnpm db:smoke`
+  - [x] 3.2 LLM providers: interface + Groq chat / Voyage embeddings (free), Claude + OpenAI ready; `pnpm ai:smoke`
   - [ ] 3.3 Ingestion: chunk, embed, store (needs files in `data/knowledge-base/`)
   - [ ] 3.4 Retrieval + `/chat` API with citations
   - [ ] 3.5 Chat UI
