@@ -67,16 +67,17 @@ New problems are added at the bottom of each step's section as we build.
 
 ## Step 07: LLM providers
 
-| #   | Symptom                                       | Cause                                 | Fix                                                     | Lesson                                          |
-| --- | --------------------------------------------- | ------------------------------------- | ------------------------------------------------------- | ----------------------------------------------- |
-| 28  | `temperature` would 400 on Claude             | Current Claude models reject it       | Send `effort` instead; temperature only for open models | APIs drift; check current docs                  |
-| 29  | 1024 max tokens too low                       | Thinking counts toward the limit      | 4096                                                    | Budget for thinking + answer                    |
-| 30  | OpenAI `429 credit_balance_exhausted`         | No credit (billing), not a rate limit | Voyage embeddings (free tokens)                         | Read the error code; don't retry billing errors |
-| 31  | Anthropic `400 credit balance too low`        | No credit; keys valid (no 401)        | Groq chat (free tier)                                   | Provider interface = config switch              |
-| 32  | Chat test never ran                           | First failure stopped the script      | Run/report each test separately                         | Tests must not hide each other                  |
-| 33  | Vector size 1536 → 1024                       | Voyage model size                     | Migration 0002                                          | New embedding model = migration + re-embed      |
-| 34  | `db:smoke` had 1536 hardcoded                 | Broke "settings only in .env"         | Read from config                                        | Hardcoded values hide until change              |
-| 35  | Voyage response format missing from main docs | Docs split across pages               | Read the API reference                                  | Verify field names at the source                |
+| #   | Symptom                                               | Cause                                           | Fix                                                                        | Lesson                                             |
+| --- | ----------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------- |
+| 28  | `temperature` would 400 on Claude                     | Current Claude models reject it                 | Send `effort` instead; temperature only for open models                    | APIs drift; check current docs                     |
+| 29  | 1024 max tokens too low                               | Thinking counts toward the limit                | 4096                                                                       | Budget for thinking + answer                       |
+| 30  | OpenAI `429 credit_balance_exhausted`                 | No credit (billing), not a rate limit           | Voyage embeddings (free tokens)                                            | Read the error code; don't retry billing errors    |
+| 31  | Anthropic `400 credit balance too low`                | No credit; keys valid (no 401)                  | Groq chat (free tier)                                                      | Provider interface = config switch                 |
+| 32  | Chat test never ran                                   | First failure stopped the script                | Run/report each test separately                                            | Tests must not hide each other                     |
+| 33  | Vector size 1536 → 1024                               | Voyage model size                               | Migration 0002                                                             | New embedding model = migration + re-embed         |
+| 34  | `db:smoke` had 1536 hardcoded                         | Broke "settings only in .env"                   | Read from config                                                           | Hardcoded values hide until change                 |
+| 35  | Voyage response format missing from main docs         | Docs split across pages                         | Read the API reference                                                     | Verify field names at the source                   |
+| 36  | Groq: 404 model_not_found for llama-3.3-70b-versatile | Docs page listed models this account cannot use | Asked the API: GET /models; chose gpt-oss-120b / gpt-oss-20b / qwen3.8-27b | Ask the API what is available; docs pages go stale |
 
 ## Debugging habits we used
 
