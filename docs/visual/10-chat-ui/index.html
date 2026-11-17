@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 10 Chat UI</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 10</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 10 · Task 3.5</span>
+        <h1>Chat UI</h1>
+        <p class="lead">
+          Agents ask in the browser at <code>/chat</code>, click citations to see the exact source,
+          and get a clearly different "not found" when the help centre has no answer.
+        </p>
+      </section>
+
+      <h2>1. Request path (backend for frontend)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  b["Browser<br/>chat-panel.tsx"] -->|"POST /api/chat<br/>same origin"| n["Next.js route<br/>(server)"]
+  n -->|"POST API_URL/chat<br/>server to server"| a["Hono API"]
+  a --> r["retrieve<br/>(query cache)"]
+  r --> l["LLM answer<br/>prompt answer-v2"]
+  l --> a
+  a --> n
+  n --> b
+  b --> ui["answer · [1][2] buttons<br/>source chips · meta"]
+        </pre>
+        <p class="caption">No CORS setup, and the API address never reaches the browser.</p>
+      </div>
+
+      <h2>2. What the agent sees</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Answer</h3>
+          <p class="caption">Paragraphs, lists, <strong>bold</strong>, and citation buttons ①②.</p>
+        </div>
+        <div class="card">
+          <h3>Source chips</h3>
+          <p class="caption">Blue = cited, grey = retrieved but not cited.</p>
+        </div>
+        <div class="card">
+          <h3>Source panel</h3>
+          <p class="caption">Click a citation: article, section, text, file and distance.</p>
+        </div>
+        <div class="card">
+          <h3>Not found</h3>
+          <p class="caption">
+            <span class="badge warn">amber</span> "Not in the help centre": never looks like an
+            answer.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Errors</h3>
+          <p class="caption">
+            <span class="badge bad">red</span> clear message, e.g. "Is pnpm dev:api running?"
+          </p>
+        </div>
+        <div class="card">
+          <h3>Meta line</h3>
+          <p class="caption">model · tokens · ms · prompt version.</p>
+        </div>
+      </div>
+
+      <h2>3. Safe rendering of model output</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  t["LLM text (untrusted)"] --> p["AnswerText parser<br/>paragraphs · lists · **bold** · [n]"]
+  p --> e["React elements<br/>(text is escaped)"]
+  t -. "never" .-> h["dangerouslySetInnerHTML"]
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class h bad;
+  class e good;
+        </pre>
+      </div>
+
+      <h2>4. Over-refusal fix: prompt v1 → v2 (regression-tested)</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Question</th>
+            <th>answer-v1</th>
+            <th>answer-v2</th>
+          </tr>
+          <tr>
+            <td>Set up a new Amazon Echo</td>
+            <td><span class="badge bad">not found</span></td>
+            <td><span class="badge ok">steps [1][2]</span></td>
+          </tr>
+          <tr>
+            <td>Charged twice</td>
+            <td><span class="badge ok">answered</span></td>
+            <td><span class="badge ok">answered</span></td>
+          </tr>
+          <tr>
+            <td>Pay with crypto</td>
+            <td><span class="badge ok">not found</span></td>
+            <td><span class="badge ok">not found</span></td>
+          </tr>
+          <tr>
+            <td>Injection "90 days"</td>
+            <td><span class="badge ok">5–7 days</span></td>
+            <td><span class="badge ok">5–7 days</span></td>
+          </tr>
+          <tr>
+            <td>Ship to Canada</td>
+            <td>–</td>
+            <td><span class="badge ok">not found</span></td>
+          </tr>
+        </table>
+        <p class="caption">
+          v1 refused because the setup article is generic. v2 may use general guidance and says it
+          is general. Everything else stayed correct.
+        </p>
+      </div>
+
+      <h2>5. Speed: why one answer took 24 s</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  q["question"] --> c{"in query<br/>cache?"}
+  c -- yes --> fast["0 tokens · 4 ms"]
+  c -- no --> v["Voyage embed"]
+  v -->|"429 free-tier limit"| w["retry after 20 s"]
+  w --> ok["answer (24 s total)"]
+  v -->|ok| ok2["answer (~2 s)"]
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  classDef warn fill:#fdf3e2,stroke:#a15c07,color:#3a2504;
+  class fast good;
+  class w warn;
+        </pre>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">apps/web/src/app/api/chat/route.ts</span>
+        <span class="file new">apps/web/src/components/chat/chat-panel.tsx</span>
+        <span class="file new">apps/web/src/components/chat/answer-text.tsx</span>
+        <span class="file changed">apps/web/src/app/chat/page.tsx</span>
+        <span class="file changed">apps/web/src/app/globals.css</span>
+        <span class="file changed">packages/ai/src/prompts/answer.prompt.ts (v2)</span>
+        <span class="file changed">packages/ai/src/rag/retriever.ts (cache)</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>"Set up an Amazon Echo" → not found</div>
+        <div class="cause">
+          <span class="label">Cause</span>Prompt v1 too strict for generic articles (over-refusal)
+        </div>
+        <div class="fix"><span class="label">Fix</span>Prompt v2 + regression run of 5 cases</div>
+        <div class="lesson">
+          Lesson: fixing hallucination can cause over-refusal; test both ways.
+        </div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>One answer took 24 s</div>
+        <div class="cause">
+          <span class="label">Cause</span>Voyage free-tier 429; retry waited 20 s
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Query-embedding cache (0 tokens, 4 ms on repeat)
+        </div>
+        <div class="lesson">
+          Lesson: retries save the request but cost time; caching avoids the call.
+        </div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Source panel showed raw <code>**bold**</code>
+        </div>
+        <div class="cause"><span class="label">Cause</span>Chunk text shown as stored</div>
+        <div class="fix"><span class="label">Fix</span>Same safe renderer with soft wrap</div>
+        <div class="lesson">Lesson: format stored text for humans.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>400 px screenshots cut off</div>
+        <div class="cause">
+          <span class="label">Cause</span>Headless browser minimum width (~500 px) crops
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Verified on home page; check phones in DevTools
+        </div>
+        <div class="lesson">Lesson: know your test tool's limits.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "The chat UI is built for verification: clickable citations
+        open the exact source, 'not found' is visually distinct, and model output is rendered as
+        escaped React elements because LLM text is untrusted. Requests go through a small
+        backend-for-frontend route, so there's no CORS and the API stays internal."
+      </div>
+
+      <div class="pager">
+        <a href="../09-rag-chat-api/index.html">← Step 09</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version: <a href="../../learning/10-chat-ui.md">docs/learning/10-chat-ui.md</a>
+      </p>
+    </main>
+  </body>
+</html>

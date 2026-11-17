@@ -109,4 +109,14 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
     citations, add detection (task 8).
 51. **Why version prompts?** Compare in evals/traces and roll back.
 
+## Chat UI (step 10)
+
+52. **Why proxy chat through the web server?** Same origin (no CORS), internal URL/secrets stay
+    server-side, one place for auth and rate limits (BFF).
+53. **How do you render LLM output safely?** Never as raw HTML; parse to elements or sanitise.
+54. **What makes AI answers trustworthy for agents?** Clickable sources, clear not-found, visible
+    errors, human sends the reply.
+55. **What is over-refusal?** Saying "I don't know" although sources answer; fix + regression set.
+56. **Why cache query embeddings?** Repeated questions; saves latency and cost; LRU bounds memory.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->
