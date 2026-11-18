@@ -157,6 +157,17 @@ New problems are added at the bottom of each step's section as we build.
 | 78  | Later calls 7–13 s                   | Groq tokens-per-minute limit     | SDK retries; pauses                   | Rate limits shape batch jobs         |
 | 79  | Lint: unused destructured var        | Clever destructuring             | Explicit mapping                      | Clear beats clever                   |
 
+## Step 15: Approvals
+
+| #   | Symptom                                   | Cause                             | Fix                                                       | Lesson                                           |
+| --- | ----------------------------------------- | --------------------------------- | --------------------------------------------------------- | ------------------------------------------------ |
+| 80  | Triage PR not in main                     | Not merged yet                    | Built on feat/triage-agent + merged main                  | Check origin/main before branching               |
+| 81  | Browser needs @sta/shared constants       | Package also has config.ts (.env) | @sta/shared/client entry                                  | Separate server-only and browser-safe modules    |
+| 82  | Two approvals at once                     | Read-then-write race              | Atomic conditional UPDATE                                 | Let the database decide races                    |
+| 83  | Invalid edit would consume approval       | Claim before validation           | Validation error rolls back the transaction               | Order operations so failures leave a clean state |
+| 84  | No ticketing system to execute into       | Integration later                 | Results on ticket columns/metadata; one executor function | Keep side effects behind one swappable function  |
+| 85  | Same ticket, different priority on re-run | LLM non-determinism               | Human approval; repeated eval runs                        | Measure variance                                 |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

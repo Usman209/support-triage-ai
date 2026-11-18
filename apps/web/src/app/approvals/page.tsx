@@ -1,9 +1,8 @@
-// TODO task 4: approval queue for agent actions (approve / reject / edit).
+// Approvals page (task 4.5): review, edit, approve or reject what the triage agent proposed.
+import { ApprovalsPanel } from '@/components/approvals/approvals-panel';
+
+export const metadata = { title: 'Approvals · Support Triage AI' };
+
 export default function ApprovalsPage() {
-  return (
-    <div className="card">
-      <h1>Approvals</h1>
-      <p className="muted">Coming in task 4: review and approve actions the agent proposes.</p>
-    </div>
-  );
+  return <ApprovalsPanel />;
 }

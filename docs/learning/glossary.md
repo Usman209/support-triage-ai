@@ -101,3 +101,7 @@
 | **Overfitting (prompts)**         | Tuning a prompt to a test set until it scores well there but not on new data.                          |
 | **Held-out set**                  | Test data you never use while tuning, to measure real performance.                                     |
 | **Feature flag**                  | A setting that turns a feature on/off without a code change or deploy.                                 |
+| **Atomic claim**                  | One conditional UPDATE that only one request can win; prevents double processing.                      |
+| **Optimistic concurrency**        | No locks while users think; conflicts are detected at write time (409).                                |
+| **Lazy expiry**                   | Expire overdue items when they are next read, instead of a background job.                             |
+| **409 Conflict**                  | HTTP status for "the resource changed; your action conflicts with its state".                          |

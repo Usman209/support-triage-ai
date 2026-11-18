@@ -12,12 +12,12 @@ Status: `[ ]` not started, `[~]` in progress, `[x]` done.
   - [x] 3.4 Retrieval + `POST /chat` with citations, "not found" threshold (RAG_MAX_DISTANCE=0.70), versioned prompt
   - [x] 3.5 Chat UI at /chat: citations, source panel, not-found state; prompt answer-v2; query-embedding cache
   - [x] 3.6 Langfuse tracing: chain/retriever/embedding/generation observations, trace link in UI
-- [~] **4. Agent**: approval-gated triage agent, tool registry, approval queue UI and API
+- [x] **4. Agent**: approval-gated triage agent, tool registry, approval queue UI and API
   - [x] 4.1 Data model: tickets, agent_runs, proposed_actions (approval queue), append-only audit_log; `pnpm db:agent-smoke`
   - [x] 4.2 Load tickets without PII: 8,469 rows, allow-listed columns, email/phone redaction, idempotent; `pnpm seed:tickets`, `seed:tickets:check`
   - [x] 4.3 Triage agent (workflow): Zod-validated suggestion + repair, guards, pending proposals, supersede, audit; prompt triage-v2 (12/12 on samples); `POST /tickets/:ref/triage`
-  - [ ] 4.4 Approvals API: list, approve, reject, execute, audit
-  - [ ] 4.5 Approvals UI
+  - [x] 4.4 Approvals API: lazy expiry, atomic claim, re-validation, execute + audit in one transaction
+  - [x] 4.5 Approvals page at /approvals: triage box, tabs, approve / edit / reject
 - [ ] **7. Evals**: promptfoo datasets and assertions, CI eval step
 - [ ] **8. Security**: PII redaction, prompt-injection checks, auth (OIDC), rate limits, red-teaming
 - [ ] **9. Deployment**: Docker images, Terraform (AKS, ACR, Postgres), Helm chart, CD pipeline

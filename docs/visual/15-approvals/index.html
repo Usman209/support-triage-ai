@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 15 Approvals</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 15</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 15 · Tasks 4.4 + 4.5</span>
+        <h1>Approvals: the human decides</h1>
+        <p class="lead">
+          Review what the agent proposed at <code>/approvals</code>. Approve, edit or reject.
+          Approving executes the action on the ticket, safely and audited.
+        </p>
+      </section>
+
+      <h2>1. The whole loop</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  t["Ticket"] -->|"Run triage"| ag["Triage agent<br/>(proposes)"]
+  ag --> p["proposed_actions<br/>PENDING"]
+  p --> ui["Approvals page"]
+  ui -->|Approve / Edit| ex["validate + execute<br/>one transaction"]
+  ui -->|Reject| rj["REJECTED"]
+  ex --> tk["Ticket updated<br/>category · priority ·<br/>approved reply · note"]
+  ex --> au[("audit_log")]
+  rj --> au
+  p -->|"30 min"| exp["EXPIRED"] --> au
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  classDef warn fill:#fdf3e2,stroke:#a15c07,color:#3a2504;
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  class tk good;
+  class p warn;
+  class rj,exp bad;
+        </pre>
+      </div>
+
+      <h2>2. What happens when you click Approve</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+sequenceDiagram
+  participant U as Reviewer
+  participant W as Next.js proxy
+  participant A as API
+  participant D as Postgres
+  U->>W: Approve (edited payload?)
+  W->>A: POST /approvals/:id/approve
+  A->>D: BEGIN
+  A->>D: UPDATE … SET approved WHERE pending AND not expired
+  alt no row claimed
+    A-->>U: 404 / 409 expired / 409 already decided
+  else claimed
+    A->>A: Zod-validate payload (400 → ROLLBACK, stays pending)
+    A->>D: audit action.approved (edited? original?)
+    A->>D: SAVEPOINT: apply to ticket
+    alt ok
+      A->>D: executed + result · audit action.executed
+    else error
+      A->>D: failed + error · audit action.failed
+    end
+    A->>D: COMMIT
+    A-->>U: item + ticket after the change
+  end
+        </pre>
+      </div>
+
+      <h2>3. Two reviewers click at the same moment</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+sequenceDiagram
+  participant Al as Alice
+  participant Bo as Bob
+  participant D as Postgres
+  Al->>D: UPDATE … WHERE id = X AND status = 'pending'
+  Bo->>D: UPDATE … WHERE id = X AND status = 'pending'
+  D-->>Al: 1 row (wins) → executed
+  D-->>Bo: 0 rows → 409 "Already executed by user:alice"
+        </pre>
+        <p class="caption">Tested for real: <code>200 + 409</code>, winner user:alice.</p>
+      </div>
+
+      <h2>4. Tested rules</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+          </tr>
+          <tr>
+            <td>Approve → executed, ticket changed</td>
+            <td><span class="badge ok">pass</span></td>
+          </tr>
+          <tr>
+            <td>Approve twice</td>
+            <td><span class="badge ok">409 already decided</span></td>
+          </tr>
+          <tr>
+            <td>Invalid edit (<code>free_pizza</code>)</td>
+            <td><span class="badge ok">400, stays pending</span></td>
+          </tr>
+          <tr>
+            <td>Valid edit</td>
+            <td><span class="badge ok">executed with edit</span></td>
+          </tr>
+          <tr>
+            <td>Simultaneous approvals</td>
+            <td><span class="badge ok">200 + 409</span></td>
+          </tr>
+          <tr>
+            <td>Reject</td>
+            <td><span class="badge ok">rejected</span></td>
+          </tr>
+          <tr>
+            <td>Expired proposal</td>
+            <td><span class="badge ok">409 expired</span></td>
+          </tr>
+          <tr>
+            <td>Through the web proxy (the buttons)</td>
+            <td><span class="badge ok">priority null → medium</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>5. Server-only vs browser-safe code</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  idx["@sta/shared<br/>config.ts (reads .env, secrets)<br/>+ schemas"] --> srv["API · Next.js server routes"]
+  cli["@sta/shared/client<br/>schemas + constants only"] --> br["Browser components<br/>(approvals-panel.tsx)"]
+  idx -. "never imported" .-> br
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  class cli,br good;
+        </pre>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">packages/shared/src/schemas/approvals.ts</span>
+        <span class="file new">packages/shared/src/client.ts</span>
+        <span class="file changed">apps/api/src/services/approval.service.ts</span>
+        <span class="file changed">apps/api/src/routes/approvals.ts</span>
+        <span class="file new">apps/web/src/lib/api-proxy.ts</span>
+        <span class="file new">apps/web/src/app/api/approvals/…, api/tickets/[ref]/triage</span>
+        <span class="file new">apps/web/src/components/approvals/approvals-panel.tsx</span>
+        <span class="file changed">apps/web/src/app/approvals/page.tsx · globals.css</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Browser needs constants from <code>@sta/shared</code>
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>That package also contains <code>config.ts</code> (reads
+          .env)
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span><code>@sta/shared/client</code> browser-safe entry
+        </div>
+        <div class="lesson">Lesson: separate server-only and browser-safe modules.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Two approvals at once could both execute
+        </div>
+        <div class="cause"><span class="label">Cause</span>Read-then-write race</div>
+        <div class="fix"><span class="label">Fix</span>Atomic conditional UPDATE</div>
+        <div class="lesson">Lesson: let the database decide races.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Same ticket, different priority on re-run
+        </div>
+        <div class="cause"><span class="label">Cause</span>LLM output is non-deterministic</div>
+        <div class="fix">
+          <span class="label">Fix</span>Human approval; evals run multiple times
+        </div>
+        <div class="lesson">Lesson: measure variance, don't trust one run.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "Approval is an atomic claim on a pending, unexpired
+        proposal, followed by re-validation of the possibly edited payload and execution in the same
+        transaction, with every step in an append-only audit log. Two reviewers clicking at once get
+        one success and one 409."
+      </div>
+
+      <div class="pager">
+        <a href="../14-triage-agent/index.html">← Step 14</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version: <a href="../../learning/15-approvals.md">docs/learning/15-approvals.md</a>
+      </p>
+    </main>
+  </body>
+</html>
