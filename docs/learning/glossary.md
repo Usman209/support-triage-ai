@@ -82,3 +82,10 @@
 | **Context propagation**          | The active span is carried automatically so child steps nest correctly.                                |
 | **Decorator**                    | A wrapper that adds behaviour (tracing) to an object without changing its callers.                     |
 | **Best-effort**                  | Tried but not guaranteed; failure must not affect the main work.                                       |
+| **Human in the loop**            | A person must approve before an AI action takes effect.                                                |
+| **Approval queue**               | List of pending proposed actions waiting for a human decision.                                         |
+| **Append-only**                  | New rows may be added; existing rows can never be changed or deleted.                                  |
+| **Trigger**                      | Database code that runs automatically on INSERT/UPDATE/DELETE (here: blocks changes).                  |
+| **Enum**                         | A column type that only accepts a fixed list of values.                                                |
+| **Savepoint**                    | A point inside a transaction you can roll back to without losing the whole transaction.                |
+| **Data minimisation**            | Store only the personal data you actually need (GDPR principle).                                       |

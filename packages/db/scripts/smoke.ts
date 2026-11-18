@@ -59,8 +59,11 @@ async function main() {
       console.table(rows);
 
       await tx.delete(documents).where(sql`${documents.source} = 'test/smoke.md'`);
-      const left = await tx.execute(sql`select count(*)::int as n from chunks`);
-      console.log('chunks left after deleting the document (cascade):', left[0]?.n);
+      // Count only THIS document's chunks: the real knowledge base has its own chunks too.
+      const left = await tx.execute(
+        sql`select count(*)::int as n from chunks where document_id = ${doc.id}`,
+      );
+      console.log('test chunks left after deleting the document (cascade):', left[0]?.n);
 
       throw new Rollback();
     });
