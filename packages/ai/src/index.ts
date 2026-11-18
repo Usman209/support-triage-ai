@@ -4,3 +4,4 @@ export type * from './providers/types';
 export * from './rag';
 export * from './agents';
 export { warmQueryCache } from './rag/retriever';
+export { traceLink } from './tracing';

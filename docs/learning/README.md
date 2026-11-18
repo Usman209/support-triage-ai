@@ -33,8 +33,8 @@ Read the steps in order. Each step file has the same sections:
 | 12  | [Task 4.1: Agent data model (tickets, approvals, audit)](12-agent-data-model.md) | Done    |
 | 13  | [Task 4.2: Load tickets without PII](13-load-tickets.md)                         | Done    |
 | 14  | [Task 4.3: Triage agent](14-triage-agent.md)                                     | Done    |
-| 15  | Task 4.4: Approvals API                                                          | Next    |
-| 16+ | Task 4.5 approvals UI; 7 evals, 8 security, 9 deploy, 10 monitoring              | Planned |
+| 15  | [Tasks 4.4 + 4.5: Approvals API and page](15-approvals.md)                       | Done    |
+| 16+ | Task 7 evals (next), 8 security, 9 deploy, 10 monitoring                         | Planned |
 
 **Visual version:** open [docs/visual/index.html](../visual/index.html) in a browser for diagrams of
 each step (see the picture first, then read the text here).

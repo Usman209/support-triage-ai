@@ -161,4 +161,15 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 75. **Evaluate an LLM classifier?** Labelled set, per-field accuracy, review misses, versioned
     prompts, held-out set you never tune on.
 
+## Approvals (step 15)
+
+76. **Human-in-the-loop for agent actions?** Proposals with rationale and expiry; approve/edit/reject;
+    re-validate and execute in one transaction; audit; no execution of expired/decided proposals.
+77. **Prevent double approval?** Atomic conditional UPDATE (WHERE status = 'pending') → one winner,
+    others 409.
+78. **Why re-validate on approval?** Human edits and LLM output are untrusted; last line of defence.
+79. **Why log edits with the original?** Accountability and data for improving the agent.
+80. **Share types with the browser safely?** Browser-safe entry with schemas only; config/secrets
+    stay server-side.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->
