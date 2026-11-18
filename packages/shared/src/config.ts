@@ -98,6 +98,7 @@ const envSchema = z.object({
   RAG_RERANKER: z.enum(['none', 'cohere', 'local']),
   COHERE_API_KEY: optionalString(),
   KNOWLEDGE_BASE_DIR: requiredString(),
+  TICKETS_CSV_PATH: requiredString(),
 
   // Agent and approvals
   AGENT_MAX_STEPS: int(),
@@ -199,6 +200,8 @@ export const config = Object.freeze({
     cohereApiKey: env.COHERE_API_KEY,
     /** Absolute path of the knowledge-base folder. */
     knowledgeBaseDir: resolve(projectRoot, env.KNOWLEDGE_BASE_DIR),
+    /** Absolute path of the ticket dataset CSV (task 4.2). */
+    ticketsCsvPath: resolve(projectRoot, env.TICKETS_CSV_PATH),
     /** Project root, used to store document sources as stable relative paths. */
     projectRoot,
   },

@@ -89,3 +89,7 @@
 | **Enum**                         | A column type that only accepts a fixed list of values.                                                |
 | **Savepoint**                    | A point inside a transaction you can roll back to without losing the whole transaction.                |
 | **Data minimisation**            | Store only the personal data you actually need (GDPR principle).                                       |
+| **Allow-list**                   | Only the listed items are allowed; everything else is excluded by default.                             |
+| **Redaction**                    | Replacing sensitive text (emails, phones) with placeholders like [email].                              |
+| **Seeding**                      | Loading initial data into a database.                                                                  |
+| **Natural key**                  | An id that comes from the source data (Ticket ID), used to match rows on re-load.                      |

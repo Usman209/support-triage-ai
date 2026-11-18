@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 13 Load Tickets</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 13</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 13 · Task 4.2</span>
+        <h1>Load tickets without personal data</h1>
+        <p class="lead">
+          8,469 tickets loaded in 1.8 s: personal columns never read, contact details redacted from
+          the text, template placeholders filled, safe to run again.
+        </p>
+      </section>
+
+      <h2>1. What goes in, what stays out</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  csv["customer_support_tickets.csv<br/>17 columns · data/raw (gitignored)"]
+  csv --> keep["KEPT (allow-list)<br/>Ticket ID · Product · Subject<br/>Description · Status · Channel"]
+  csv -. "never read" .-> drop["DROPPED<br/>Name · Email · Age · Gender<br/>Purchase date · response times"]
+  csv -. "reference only" .-> meta["metadata.datasetLabels<br/>type · priority (random)"]
+  keep --> clean["clean description<br/>fill placeholders · redact email/phone"]
+  clean --> db[("tickets<br/>8,481 rows")]
+  meta --> db
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  class keep,db good;
+  class drop bad;
+        </pre>
+      </div>
+
+      <h2>2. Cleaning one description (SAMPLE-008)</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th></th>
+            <th>Text</th>
+          </tr>
+          <tr>
+            <td><span class="badge bad">CSV</span></td>
+            <td>
+              My <code>{product_purchased}</code> makes a loud grinding noise. Please call me back
+              on <code>+1 555 0100 2222</code> or email me at <code>jane.doe@example.org</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge ok">Table</span></td>
+            <td>
+              My <strong>Roomba Robot Vacuum</strong> makes a loud grinding noise. Please call me
+              back on <strong>[phone]</strong> or email me at <strong>[email]</strong>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>3. Re-runnable (idempotent) and safe for approved decisions</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  row["CSV row<br/>external_id = 3"] --> exists{"already in<br/>tickets?"}
+  exists -- no --> ins["INSERT"]
+  exists -- yes --> upd["UPDATE source fields<br/>subject · description · product<br/>channel · status · metadata"]
+  upd -. "never touched" .-> tri["category · priority<br/>(owned by approved actions)"]
+  classDef protect fill:#fdf3e2,stroke:#a15c07,color:#3a2504;
+  class tri protect;
+        </pre>
+        <p class="caption">
+          Tested: SAMPLE-003 set to billing_inquiry/critical, re-loaded, values kept.
+        </p>
+      </div>
+
+      <h2>4. Results</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Run</th>
+            <th>Read</th>
+            <th>Inserted</th>
+            <th>Updated</th>
+            <th>Placeholders</th>
+            <th>Emails</th>
+            <th>Phones</th>
+            <th>Time</th>
+          </tr>
+          <tr>
+            <td>Sample · run 1</td>
+            <td>12</td>
+            <td>12</td>
+            <td>0</td>
+            <td>12 + 1 unknown</td>
+            <td>1</td>
+            <td>1</td>
+            <td>0.3 s</td>
+          </tr>
+          <tr>
+            <td>Sample · run 2</td>
+            <td>12</td>
+            <td>0</td>
+            <td><strong>12</strong></td>
+            <td>–</td>
+            <td>–</td>
+            <td>–</td>
+            <td>–</td>
+          </tr>
+          <tr>
+            <td>Full dataset</td>
+            <td>8,469</td>
+            <td>8,469</td>
+            <td>0</td>
+            <td>14,392 + 281 unknown</td>
+            <td>80</td>
+            <td>188</td>
+            <td>1.8 s</td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>5. Verification (pnpm seed:tickets:check)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>No PII columns</h3>
+          <p class="caption"><span class="badge ok">pass</span> none in the table</p>
+        </div>
+        <div class="card">
+          <h3>No emails / phones</h3>
+          <p class="caption"><span class="badge ok">pass</span> 0 left in descriptions</p>
+        </div>
+        <div class="card">
+          <h3>No {placeholders}</h3>
+          <p class="caption"><span class="badge ok">pass</span> 0 left</p>
+        </div>
+        <div class="card">
+          <h3>Not triaged yet</h3>
+          <p class="caption"><span class="badge ok">pass</span> category/priority all null</p>
+        </div>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">data/sample/customer_support_tickets.sample.csv</span>
+        <span class="file new">packages/db/src/seed/tickets.ts</span>
+        <span class="file new">packages/db/scripts/seed-tickets.ts</span>
+        <span class="file new">packages/db/scripts/seed-check.ts</span>
+        <span class="file changed">packages/shared/src/config.ts (TICKETS_CSV_PATH)</span>
+        <span class="file changed">package.json (seed:tickets*)</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Emails and phone numbers inside descriptions
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Customers write contact details in messages
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>Redact to [email] / [phone] while loading
+        </div>
+        <div class="lesson">Lesson: dropping PII columns is not enough.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>~150 kinds of {placeholders}</div>
+        <div class="cause"><span class="label">Cause</span>Template-generated dataset</div>
+        <div class="fix"><span class="label">Fix</span>Map known ones, unknown → […]</div>
+        <div class="lesson">Lesson: profile the data before writing cleaning rules.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Re-load could erase approved decisions
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Naive upsert overwrites every column
+        </div>
+        <div class="fix"><span class="label">Fix</span>Update source fields only; tested</div>
+        <div class="lesson">Lesson: decide which system owns each field.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "We load tickets with an allow-list of columns, so personal
+        data never enters the database, redact contact details from free text, fill the dataset's
+        template placeholders, and upsert on the ticket id so loads are repeatable without
+        overwriting fields owned by approved agent actions. A check script verifies all of it."
+      </div>
+
+      <div class="pager">
+        <a href="../12-agent-data-model/index.html">← Step 12</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/13-load-tickets.md">docs/learning/13-load-tickets.md</a>
+      </p>
+    </main>
+  </body>
+</html>

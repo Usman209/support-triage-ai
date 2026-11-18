@@ -11,10 +11,14 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:smoke": "tsx scripts/smoke.ts",
-    "db:agent-smoke": "tsx scripts/agent-smoke.ts"
+    "db:agent-smoke": "tsx scripts/agent-smoke.ts",
+    "seed:tickets": "tsx scripts/seed-tickets.ts",
+    "seed:tickets:sample": "tsx scripts/seed-tickets.ts --file data/sample/customer_support_tickets.sample.csv",
+    "seed:tickets:check": "tsx scripts/seed-check.ts"
   },
   "dependencies": {
     "@sta/shared": "workspace:*",
+    "csv-parse": "^7.0.3",
     "drizzle-orm": "^0.36.0",
     "postgres": "^3.4.0"
   },

@@ -139,4 +139,13 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
     listing, expiry, history, survival across restarts.
 65. **Why expire proposals?** Avoid applying decisions based on stale information.
 
+## Loading customer data (step 13)
+
+66. **Load customer data responsibly?** Allow-list fields, redact PII in free text, raw files out
+    of git, document removals, verify with checks.
+67. **Allow-list or deny-list columns?** Allow-list: new source columns are excluded by default.
+68. **Idempotent data load?** Stable key + upsert; report inserted vs updated.
+69. **Why not overwrite all fields on re-load?** Other processes own some fields (approved actions).
+70. **Regex PII redaction enough?** First line only; production uses PII detectors before LLM/logs.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->
