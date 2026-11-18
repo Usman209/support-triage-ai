@@ -42,3 +42,16 @@ POST {{api}}/chat
 Content-Type: application/json
 
 { "question": "" }
+
+### ---------- Triage agent (task 4.3) ----------
+### Triage a ticket -> PENDING proposals (needs FEATURE_AGENT_ENABLED=true)
+POST {{api}}/tickets/SAMPLE-003/triage
+
+### Ticket with its agent runs and proposed actions (pending / expired / ...)
+GET {{api}}/tickets/SAMPLE-003
+
+### A real ticket from the dataset (external id = "Ticket ID" in the CSV)
+POST {{api}}/tickets/42/triage
+
+### Unknown ticket -> 404
+POST {{api}}/tickets/NOPE-1/triage

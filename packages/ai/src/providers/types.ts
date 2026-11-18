@@ -21,6 +21,11 @@ export interface ChatRequest {
   effort?: Effort;
   /** Defaults to LLM_MAX_OUTPUT_TOKENS. */
   maxOutputTokens?: number;
+  /**
+   * 'json': ask the provider for a JSON object (Groq/OpenAI JSON mode). The caller must still
+   * validate the result: JSON mode guarantees valid JSON, not the right fields.
+   */
+  responseFormat?: 'text' | 'json';
 }
 
 export interface ChatResult {

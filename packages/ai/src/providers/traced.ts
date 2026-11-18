@@ -28,6 +28,7 @@ export function tracedChatProvider(inner: ChatProvider): ChatProvider {
             ],
             modelParameters: {
               tier: request.tier ?? 'chat',
+              responseFormat: request.responseFormat ?? 'text',
               maxOutputTokens: request.maxOutputTokens ?? config.llm.maxOutputTokens,
               ...(inner.name === 'anthropic'
                 ? { effort: request.effort ?? config.llm.effort }

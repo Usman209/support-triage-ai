@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "ai:smoke": "tsx scripts/smoke.ts",
     "ingest": "tsx scripts/ingest.ts",
-    "kb:check": "tsx scripts/kb-check.ts"
+    "kb:check": "tsx scripts/kb-check.ts",
+    "triage": "tsx scripts/triage.ts",
+    "triage:check": "tsx scripts/triage-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",

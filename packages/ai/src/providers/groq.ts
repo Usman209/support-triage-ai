@@ -41,6 +41,9 @@ export class GroqChatProvider implements ChatProvider {
       max_completion_tokens: request.maxOutputTokens ?? config.llm.maxOutputTokens,
       // Open models still use temperature (Claude uses `effort` instead).
       temperature: config.llm.temperature,
+      ...(request.responseFormat === 'json'
+        ? { response_format: { type: 'json_object' as const } }
+        : {}),
     });
 
     const choice = response.choices[0];
