@@ -80,4 +80,7 @@ Progress is tracked in [docs/task-map.md](docs/task-map.md).
 Every step is explained in [docs/learning/](docs/learning/README.md): what was built, why,
 problems faced and how they were fixed, and interview questions.
 
+How one chat question flows through the whole system:
+[docs/learning/end-to-end-flow.md](docs/learning/end-to-end-flow.md) (visual: `docs/visual/flow/index.html`).
+
 Visual version with diagrams for each step: open `docs/visual/index.html` in a browser.
