@@ -29,6 +29,7 @@
     "seed:tickets:sample": "pnpm --filter @sta/db seed:tickets:sample",
     "seed:tickets:check": "pnpm --filter @sta/db seed:tickets:check",
     "ingest": "pnpm --filter @sta/ai ingest",
+    "docs:pdf": "node docs/guide/build-guide.mjs --pdf",
     "kb:check": "pnpm --filter @sta/ai kb:check",
     "triage": "pnpm --filter @sta/ai triage",
     "triage:check": "pnpm --filter @sta/ai triage:check",

@@ -8,3 +8,4 @@ packages/db/migrations
 infra/terraform/.terraform
 infra/helm
 services/**/.venv
+docs/guide/guide.html
