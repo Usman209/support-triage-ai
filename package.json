@@ -25,7 +25,9 @@
     "db:smoke": "pnpm --filter @sta/db db:smoke",
     "db:agent-smoke": "pnpm --filter @sta/db db:agent-smoke",
     "ai:smoke": "pnpm --filter @sta/ai ai:smoke",
-    "seed": "tsx scripts/seed.ts",
+    "seed:tickets": "pnpm --filter @sta/db seed:tickets",
+    "seed:tickets:sample": "pnpm --filter @sta/db seed:tickets:sample",
+    "seed:tickets:check": "pnpm --filter @sta/db seed:tickets:check",
     "ingest": "pnpm --filter @sta/ai ingest",
     "kb:check": "pnpm --filter @sta/ai kb:check",
     "eval": "tsx scripts/eval.ts"

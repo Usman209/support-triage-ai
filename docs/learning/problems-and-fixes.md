@@ -135,6 +135,16 @@ New problems are added at the bottom of each step's section as we build.
 | 66  | Expected error aborted the test transaction | Postgres aborts after any error      | SAVEPOINT per expected failure        | Savepoints for testing errors          |
 | 67  | db:smoke "74 chunks left after cascade"     | Counted all chunks incl. the real KB | Count only the test document's chunks | Tests must not depend on other data    |
 
+## Step 13: Load tickets
+
+| #   | Symptom                                      | Cause                       | Fix                               | Lesson                              |
+| --- | -------------------------------------------- | --------------------------- | --------------------------------- | ----------------------------------- |
+| 68  | PII inside free text (80 emails, 188 phones) | Contact details in messages | Regex redaction while loading     | Dropping PII columns is not enough  |
+| 69  | ~150 kinds of {placeholders}                 | Template-generated data     | Known mapped, unknown → […]       | Profile data before cleaning rules  |
+| 70  | Line breaks/quotes in descriptions           | CSV quoting                 | csv-parse                         | Don't hand-roll CSV parsing         |
+| 71  | Re-load could erase approved triage          | Naive upsert                | Update source fields only; tested | Decide which system owns each field |
+| 72  | Phone regex may over-redact                  | Errs on the safe side       | Accepted; PII detector in task 8  | Redaction recall vs precision       |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

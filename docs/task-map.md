@@ -14,7 +14,7 @@ Status: `[ ]` not started, `[~]` in progress, `[x]` done.
   - [x] 3.6 Langfuse tracing: chain/retriever/embedding/generation observations, trace link in UI
 - [~] **4. Agent**: approval-gated triage agent, tool registry, approval queue UI and API
   - [x] 4.1 Data model: tickets, agent_runs, proposed_actions (approval queue), append-only audit_log; `pnpm db:agent-smoke`
-  - [ ] 4.2 Load tickets from the CSV without PII
+  - [x] 4.2 Load tickets without PII: 8,469 rows, allow-listed columns, email/phone redaction, idempotent; `pnpm seed:tickets`, `seed:tickets:check`
   - [ ] 4.3 Triage agent: tools, structured suggestion, proposals
   - [ ] 4.4 Approvals API: list, approve, reject, execute, audit
   - [ ] 4.5 Approvals UI
