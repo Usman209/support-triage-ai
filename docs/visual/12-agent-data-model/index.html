@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 12 Agent Data Model</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 12</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 12 · Task 4.1</span>
+        <h1>Agent data model</h1>
+        <p class="lead">
+          Tickets, agent runs, proposed actions (the approval queue) and an audit log that nobody
+          can edit, built before the agent itself.
+        </p>
+      </section>
+
+      <h2>1. The tables</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+erDiagram
+  tickets ||--o{ agent_runs : "triaged by"
+  agent_runs ||--o{ proposed_actions : "proposes"
+  tickets ||--o{ proposed_actions : "for"
+  tickets {
+    uuid id PK
+    text external_id UK "CSV Ticket ID"
+    text subject
+    text description
+    text product
+    enum category "null until approved"
+    enum priority "null until approved"
+    enum status
+  }
+  agent_runs {
+    uuid id PK
+    uuid ticket_id FK
+    enum status "running|completed|failed"
+    text model
+    text prompt_version
+    text trace_id "Langfuse"
+    jsonb result "suggestion"
+  }
+  proposed_actions {
+    uuid id PK
+    uuid run_id FK
+    uuid ticket_id FK
+    enum type "5 allowed types"
+    jsonb payload
+    text rationale "why"
+    enum status "pending..."
+    timestamptz expires_at
+    text decided_by
+  }
+  audit_log {
+    bigserial id PK "ordered"
+    timestamptz occurred_at
+    text actor "agent|user|system"
+    text event
+    uuid ticket_id "NO foreign key"
+    jsonb details
+  }
+        </pre>
+        <p class="caption">
+          No customer name, email, age or gender anywhere: not needed to triage, so not stored.
+        </p>
+      </div>
+
+      <h2>2. Life of a proposed action</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+stateDiagram-v2
+  [*] --> pending: agent proposes
+  pending --> approved: human approves
+  pending --> rejected: human rejects
+  pending --> expired: after 30 min
+  approved --> executed: action runs
+  approved --> failed: action errors
+  rejected --> [*]
+  expired --> [*]
+  executed --> [*]
+  failed --> [*]
+        </pre>
+        <p class="caption">Every arrow also writes a row to <code>audit_log</code>.</p>
+      </div>
+
+      <h2>3. What the agent may propose</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Action type</th>
+            <th>Example payload</th>
+            <th>Allowed?</th>
+          </tr>
+          <tr>
+            <td><code>set_category</code></td>
+            <td><code>{ "category": "billing_inquiry" }</code></td>
+            <td><span class="badge warn">propose → approve</span></td>
+          </tr>
+          <tr>
+            <td><code>set_priority</code></td>
+            <td><code>{ "priority": "high" }</code></td>
+            <td><span class="badge warn">propose → approve</span></td>
+          </tr>
+          <tr>
+            <td><code>draft_reply</code></td>
+            <td><code>{ "reply": "…", "sources": [1] }</code></td>
+            <td><span class="badge warn">propose → approve</span></td>
+          </tr>
+          <tr>
+            <td><code>add_internal_note</code></td>
+            <td><code>{ "note": "…" }</code></td>
+            <td><span class="badge warn">propose → approve</span></td>
+          </tr>
+          <tr>
+            <td><code>escalate</code></td>
+            <td><code>{ "team": "billing" }</code></td>
+            <td><span class="badge warn">propose → approve</span></td>
+          </tr>
+          <tr>
+            <td>send to customer, close, refund, delete</td>
+            <td>–</td>
+            <td><span class="badge bad">not in the enum</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>4. The audit log can't be changed (tested)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  ins["INSERT"] --> ok["allowed"]
+  up["UPDATE"] --> trg{"trigger<br/>audit_log_block_changes"}
+  del["DELETE"] --> trg
+  tr["TRUNCATE"] --> trg
+  trg --> err["ERROR: audit_log is append-only"]
+  cas["delete ticket<br/>(cascade)"] --> runs["runs + actions deleted"]
+  cas -. "no FK" .-> keep["audit rows kept"]
+  classDef good fill:#d1fadf,stroke:#157f3b,color:#0b3d1c;
+  classDef bad fill:#fdecea,stroke:#b42318,color:#3a0d08;
+  class ok,keep good;
+  class err bad;
+        </pre>
+      </div>
+
+      <h2>5. Smoke test (pnpm db:agent-smoke)</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+          </tr>
+          <tr>
+            <td>Insert ticket, run, pending action, audit entry</td>
+            <td><span class="badge ok">pass</span> expires in 30 min</td>
+          </tr>
+          <tr>
+            <td>Approve action</td>
+            <td><span class="badge ok">pass</span></td>
+          </tr>
+          <tr>
+            <td>Audit UPDATE blocked</td>
+            <td><span class="badge ok">pass</span> "UPDATE is not allowed"</td>
+          </tr>
+          <tr>
+            <td>Audit DELETE blocked</td>
+            <td><span class="badge ok">pass</span> "DELETE is not allowed"</td>
+          </tr>
+          <tr>
+            <td>Delete ticket: cascade, audit survives</td>
+            <td><span class="badge ok">pass</span> runs 0 · actions 0 · audit 1</td>
+          </tr>
+        </table>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file changed">packages/db/src/schema/tickets.ts</span>
+        <span class="file changed">packages/db/src/schema/approvals.ts</span>
+        <span class="file changed">packages/db/src/schema/index.ts</span>
+        <span class="file new">migrations/0003_agent_tickets_approvals_audit.sql</span>
+        <span class="file new">migrations/0004_audit_log_append_only.sql</span>
+        <span class="file new">packages/db/scripts/agent-smoke.ts</span>
+        <span class="file changed">packages/db/scripts/smoke.ts</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>Drizzle can't express "append-only"</div>
+        <div class="cause"><span class="label">Cause</span>ORMs model tables, not triggers</div>
+        <div class="fix"><span class="label">Fix</span>Hand-written migration with triggers</div>
+        <div class="lesson">Lesson: rules that must always hold belong in the database.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span>Testing a failing statement aborted the transaction
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Postgres aborts a transaction after any error
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>SAVEPOINT (nested transaction) per expected failure
+        </div>
+        <div class="lesson">Lesson: savepoints let you test errors inside one transaction.</div>
+      </div>
+      <div class="problem">
+        <div class="sym">
+          <span class="label">Symptom</span><code>db:smoke</code>: "74 chunks left after cascade"
+        </div>
+        <div class="cause">
+          <span class="label">Cause</span>Test counted all chunks, including the real knowledge base
+        </div>
+        <div class="fix"><span class="label">Fix</span>Count only the test document's chunks</div>
+        <div class="lesson">Lesson: tests must not depend on other data in the database.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "The agent can only propose: proposals are rows with a type
+        from an allow-list, a rationale, a status and an expiry. A human approves, only then does
+        the action run, and every step goes to an audit log that the database itself makes
+        append-only."
+      </div>
+
+      <div class="pager">
+        <a href="../11-langfuse-tracing/index.html">← Step 11</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/12-agent-data-model.md">docs/learning/12-agent-data-model.md</a>
+      </p>
+    </main>
+  </body>
+</html>

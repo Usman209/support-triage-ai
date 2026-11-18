@@ -23,6 +23,7 @@
     "db:generate": "pnpm --filter @sta/db db:generate",
     "db:migrate": "pnpm --filter @sta/db db:migrate",
     "db:smoke": "pnpm --filter @sta/db db:smoke",
+    "db:agent-smoke": "pnpm --filter @sta/db db:agent-smoke",
     "ai:smoke": "pnpm --filter @sta/ai ai:smoke",
     "seed": "tsx scripts/seed.ts",
     "ingest": "pnpm --filter @sta/ai ingest",

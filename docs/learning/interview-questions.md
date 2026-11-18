@@ -129,4 +129,14 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 60. **Tracing backend down?** Export in the background, never block or fail the request.
 61. **PII in traces?** Mask before export, restrict access, choose region and retention.
 
+## Agent safety and data model (step 12)
+
+62. **How do you make an agent safe on real systems?** Propose vs do: proposals with rationale,
+    human approval, validated execution, audit, dangerous actions not in the allow-list.
+63. **Tamper-proof audit log?** Append-only in the database (triggers/permissions), no cascade,
+    ordered ids; stronger: write-once storage or hash chains.
+64. **Why store proposals in a table?** Approval happens later by someone else; needs state,
+    listing, expiry, history, survival across restarts.
+65. **Why expire proposals?** Avoid applying decisions based on stale information.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->

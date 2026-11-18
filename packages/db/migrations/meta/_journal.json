@@ -22,6 +22,20 @@
       "when": 1794909191725,
       "tag": "0002_embedding_dims_1024",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794983386741,
+      "tag": "0003_agent_tickets_approvals_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794983403624,
+      "tag": "0004_audit_log_append_only",
+      "breakpoints": true
     }
   ]
 }

@@ -125,6 +125,16 @@ New problems are added at the bottom of each step's section as we build.
 | 61  | First trace never arrived                         | Langfuse briefly unreachable                      | Retried after health 200                  | Tracing is best-effort; requests unaffected   |
 | 62  | "view trace" link missing                         | Dev server served an old bundle                   | Restarted pnpm dev:web                    | Check what the server actually serves         |
 
+## Step 12: Agent data model
+
+| #   | Symptom                                     | Cause                                | Fix                                   | Lesson                                 |
+| --- | ------------------------------------------- | ------------------------------------ | ------------------------------------- | -------------------------------------- |
+| 63  | Docs PR not merged when Task 4 started      | origin/main still at PR #6           | Branched from the docs branch         | Check origin/main before branching     |
+| 64  | Drizzle can't express append-only           | ORMs model tables, not triggers      | Hand-written migration with triggers  | Must-hold rules belong in the database |
+| 65  | Cascade would erase audit history           | FK with onDelete cascade             | No FK on audit_log.ticket_id          | Audit outlives the data it describes   |
+| 66  | Expected error aborted the test transaction | Postgres aborts after any error      | SAVEPOINT per expected failure        | Savepoints for testing errors          |
+| 67  | db:smoke "74 chunks left after cascade"     | Counted all chunks incl. the real KB | Count only the test document's chunks | Tests must not depend on other data    |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).
