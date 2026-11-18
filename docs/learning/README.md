@@ -16,24 +16,25 @@ Read the steps in order. Each step file has the same sections:
 
 ## Steps
 
-| #   | Step                                                                                   | Status  |
-| --- | -------------------------------------------------------------------------------------- | ------- |
-| 00  | [Project skeleton (monorepo, TypeScript, lint)](00-project-skeleton.md)                | Done    |
-| 01  | [Configuration and secrets (.env + Zod)](01-configuration-and-env.md)                  | Done    |
-| 02  | [Local infrastructure: Docker, Postgres, MinIO](02-docker-postgres-minio.md)           | Done    |
-| 03  | [Observability: Langfuse Cloud vs self-hosted](03-observability-langfuse.md)           | Done    |
-| 04  | [Starter app: API + web shell](04-starter-app.md)                                      | Done    |
-| 05  | [Task 1: Discovery brief](05-discovery-brief.md)                                       | Draft   |
-| 06  | [Task 3.1: RAG database tables (pgvector)](06-rag-database-schema.md)                  | Done    |
-| 07  | [Task 3.2: LLM providers (chat + embeddings)](07-llm-providers.md)                     | Done    |
-| 08  | [Task 3.3: Ingestion (chunk, embed, store)](08-rag-ingestion.md)                       | Done    |
-| 09  | [Task 3.4: Retrieval + /chat API with citations](09-rag-chat-api.md)                   | Done    |
-| 10  | [Task 3.5: Chat UI](10-chat-ui.md)                                                     | Done    |
-| 11  | [Task 3.6: Langfuse tracing](11-langfuse-tracing.md)                                   | Done    |
-| 12  | [Task 4.1: Agent data model (tickets, approvals, audit)](12-agent-data-model.md)       | Done    |
-| 13  | [Task 4.2: Load tickets without PII](13-load-tickets.md)                               | Done    |
-| 14  | Task 4.3: Triage agent                                                                 | Next    |
-| 15+ | Task 4.4 approvals API, 4.5 approvals UI; 7 evals, 8 security, 9 deploy, 10 monitoring | Planned |
+| #   | Step                                                                             | Status  |
+| --- | -------------------------------------------------------------------------------- | ------- |
+| 00  | [Project skeleton (monorepo, TypeScript, lint)](00-project-skeleton.md)          | Done    |
+| 01  | [Configuration and secrets (.env + Zod)](01-configuration-and-env.md)            | Done    |
+| 02  | [Local infrastructure: Docker, Postgres, MinIO](02-docker-postgres-minio.md)     | Done    |
+| 03  | [Observability: Langfuse Cloud vs self-hosted](03-observability-langfuse.md)     | Done    |
+| 04  | [Starter app: API + web shell](04-starter-app.md)                                | Done    |
+| 05  | [Task 1: Discovery brief](05-discovery-brief.md)                                 | Draft   |
+| 06  | [Task 3.1: RAG database tables (pgvector)](06-rag-database-schema.md)            | Done    |
+| 07  | [Task 3.2: LLM providers (chat + embeddings)](07-llm-providers.md)               | Done    |
+| 08  | [Task 3.3: Ingestion (chunk, embed, store)](08-rag-ingestion.md)                 | Done    |
+| 09  | [Task 3.4: Retrieval + /chat API with citations](09-rag-chat-api.md)             | Done    |
+| 10  | [Task 3.5: Chat UI](10-chat-ui.md)                                               | Done    |
+| 11  | [Task 3.6: Langfuse tracing](11-langfuse-tracing.md)                             | Done    |
+| 12  | [Task 4.1: Agent data model (tickets, approvals, audit)](12-agent-data-model.md) | Done    |
+| 13  | [Task 4.2: Load tickets without PII](13-load-tickets.md)                         | Done    |
+| 14  | [Task 4.3: Triage agent](14-triage-agent.md)                                     | Done    |
+| 15  | Task 4.4: Approvals API                                                          | Next    |
+| 16+ | Task 4.5 approvals UI; 7 evals, 8 security, 9 deploy, 10 monitoring              | Planned |
 
 **Visual version:** open [docs/visual/index.html](../visual/index.html) in a browser for diagrams of
 each step (see the picture first, then read the text here).

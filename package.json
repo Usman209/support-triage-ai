@@ -30,6 +30,8 @@
     "seed:tickets:check": "pnpm --filter @sta/db seed:tickets:check",
     "ingest": "pnpm --filter @sta/ai ingest",
     "kb:check": "pnpm --filter @sta/ai kb:check",
+    "triage": "pnpm --filter @sta/ai triage",
+    "triage:check": "pnpm --filter @sta/ai triage:check",
     "eval": "tsx scripts/eval.ts"
   },
   "devDependencies": {

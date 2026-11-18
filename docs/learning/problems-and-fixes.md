@@ -145,6 +145,18 @@ New problems are added at the bottom of each step's section as we build.
 | 71  | Re-load could erase approved triage          | Naive upsert                | Update source fields only; tested | Decide which system owns each field |
 | 72  | Phone regex may over-redact                  | Errs on the safe side       | Accepted; PII detector in task 8  | Redaction recall vs precision       |
 
+## Step 14: Triage agent
+
+| #   | Symptom                              | Cause                            | Fix                                   | Lesson                               |
+| --- | ------------------------------------ | -------------------------------- | ------------------------------------- | ------------------------------------ |
+| 73  | Tickets PR not in main               | Not merged yet                   | Built on feat/seed-tickets            | Check origin/main before branching   |
+| 74  | "Charged twice" → refund_request     | Overlapping category definitions | triage-v2 definitions                 | Most model errors are spec errors    |
+| 75  | Installation help → product_inquiry  | Edge case undefined              | Setup/configure = technical_issue     | Define edge cases explicitly         |
+| 76  | Missing photos/noise mis-prioritised | Abstract rubric                  | Concrete examples per level           | Examples beat abstract labels        |
+| 77  | Overfitting risk                     | Tuned and tested on the same 12  | General rules; held-out set in task 7 | Never tune and test on the same data |
+| 78  | Later calls 7–13 s                   | Groq tokens-per-minute limit     | SDK retries; pauses                   | Rate limits shape batch jobs         |
+| 79  | Lint: unused destructured var        | Clever destructuring             | Explicit mapping                      | Clear beats clever                   |
+
 ## Debugging habits we used
 
 1. **Read the exact error**, then the logs (`docker compose logs <service>`).

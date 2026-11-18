@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Step 14 Triage Agent</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+    <script src="../assets/diagram.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <strong>support-triage-ai</strong>
+        <span class="crumbs"><a href="../index.html">Visual guide</a> › Step 14</span>
+        <span class="spacer"></span>
+        <button class="theme-btn" type="button">Light / dark</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <span class="eyebrow">Step 14 · Task 4.3</span>
+        <h1>Triage agent: proposes, never acts</h1>
+        <p class="lead">
+          One ticket in, a structured suggestion out: category, priority, a grounded reply, maybe an
+          escalation. Saved as <strong>pending</strong> proposals. The ticket doesn't change until a
+          human approves.
+        </p>
+      </section>
+
+      <h2>1. The pipeline</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart TB
+  t["ticket<br/>SAMPLE-003"] --> run["agent_runs<br/>status: running"]
+  run --> r["retrieve<br/>subject + description<br/>→ 4 sources"]
+  r --> llm["LLM · JSON mode<br/>prompt triage-v2"]
+  llm --> z{"Zod valid?"}
+  z -- no --> fix["repair once<br/>(errors shown)"]
+  fix --> z
+  z -- yes --> g["guards<br/>grounded reply · escalation"]
+  g --> p["proposals<br/>(code decides types)"]
+  p --> tx["1 transaction:<br/>supersede old pending<br/>insert pending · audit<br/>run completed"]
+  tx --> h(["human approves<br/>(step 4.4)"])
+  classDef pend fill:#fdf3e2,stroke:#a15c07,color:#3a2504;
+  class tx,h pend;
+        </pre>
+      </div>
+
+      <h2>2. Workflow vs agent loop (why we chose a workflow)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Workflow (chosen)</h3>
+          <p class="caption">
+            Steps known in advance. Code controls the flow, the LLM fills the values. Cheaper,
+            faster, predictable, easy to evaluate.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Agent loop</h3>
+          <p class="caption">
+            The model chooses tools step by step. Worth it when the path depends on what it finds.
+            More tokens, harder to test and control.
+          </p>
+        </div>
+      </div>
+
+      <h2>3. What one run produces (SAMPLE-003, "charged twice")</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Proposal</th>
+            <th>Payload</th>
+            <th>Rationale</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td><code>set_category</code></td>
+            <td>billing_inquiry</td>
+            <td>duplicate charge</td>
+            <td><span class="badge warn">pending</span></td>
+          </tr>
+          <tr>
+            <td><code>set_priority</code></td>
+            <td>high</td>
+            <td>"charged wrongly"</td>
+            <td><span class="badge warn">pending</span></td>
+          </tr>
+          <tr>
+            <td><code>draft_reply</code></td>
+            <td>"… 3–5 business days [1] … refund within 2 business days [1] …"</td>
+            <td>grounded in sources</td>
+            <td><span class="badge warn">pending</span></td>
+          </tr>
+          <tr>
+            <td><code>add_internal_note</code></td>
+            <td>"verify order number …"</td>
+            <td>for colleagues</td>
+            <td><span class="badge warn">pending</span></td>
+          </tr>
+        </table>
+        <p class="caption">
+          The ticket's own category is still <code>null</code>: nothing is applied until approval.
+        </p>
+      </div>
+
+      <h2>4. Tiny eval: 12 sample tickets</h2>
+      <div class="card table-wrap">
+        <table>
+          <tr>
+            <th>Prompt</th>
+            <th>Category</th>
+            <th>Priority</th>
+            <th>Grounded reply</th>
+          </tr>
+          <tr>
+            <td><code>triage-v1</code></td>
+            <td><span class="badge warn">10/12</span></td>
+            <td><span class="badge warn">10/12</span></td>
+            <td>12/12</td>
+          </tr>
+          <tr>
+            <td><code>triage-v2</code></td>
+            <td><span class="badge ok">12/12</span></td>
+            <td><span class="badge ok">12/12</span></td>
+            <td>12/12</td>
+          </tr>
+        </table>
+        <p class="caption">
+          v1 misses came from unclear definitions (charges vs returns, setup help, missing photos,
+          "works but badly"). v2 adds general rules. Optimistic: tuned on the same tickets; the
+          held-out eval is task 7.
+        </p>
+      </div>
+
+      <h2>5. Audit trail for one ticket (SAMPLE-005, 3 runs)</h2>
+      <div class="card diagram">
+        <pre class="mermaid">
+flowchart LR
+  r1["run 1<br/>3 proposed"] --> r2["run 2<br/>4 proposed<br/>3 superseded"]
+  r2 --> r3["run 3<br/>4 proposed (pending)<br/>4 superseded"]
+  r3 --> a["audit_log: 11 action.proposed ·<br/>7 action.superseded · 3 run.completed"]
+        </pre>
+      </div>
+
+      <h2>Files</h2>
+      <div class="card files">
+        <span class="file new">packages/shared/src/schemas/triage.ts</span>
+        <span class="file changed">packages/ai/src/prompts/triage.prompt.ts</span>
+        <span class="file changed">packages/ai/src/agents/triage.agent.ts</span>
+        <span class="file new">packages/ai/src/rag/citations.ts</span>
+        <span class="file new">packages/ai/src/tracing.ts</span>
+        <span class="file changed">packages/ai/src/rag/retriever.ts (warmQueryCache)</span>
+        <span class="file changed">packages/ai/src/providers/groq.ts (JSON mode)</span>
+        <span class="file changed">apps/api/src/routes/tickets.ts</span>
+        <span class="file new">packages/ai/scripts/triage.ts · triage-check.ts</span>
+      </div>
+
+      <h2>Problems and fixes</h2>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>"Charged twice" → refund_request</div>
+        <div class="cause">
+          <span class="label">Cause</span>Overlapping definitions (money back vs charges)
+        </div>
+        <div class="fix">
+          <span class="label">Fix</span>triage-v2: charges are billing, even if refunded
+        </div>
+        <div class="lesson">Lesson: most "model errors" are specification errors.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>Risk of overfitting to 12 tickets</div>
+        <div class="cause"><span class="label">Cause</span>Same set to find and fix problems</div>
+        <div class="fix">
+          <span class="label">Fix</span>Only general rules; held-out set in task 7
+        </div>
+        <div class="lesson">Lesson: never tune and test on the same data.</div>
+      </div>
+      <div class="problem">
+        <div class="sym"><span class="label">Symptom</span>Later calls 7–13 s</div>
+        <div class="cause">
+          <span class="label">Cause</span>Groq free-tier tokens-per-minute limit
+        </div>
+        <div class="fix"><span class="label">Fix</span>SDK retries; pauses between calls</div>
+        <div class="lesson">Lesson: rate limits shape batch jobs.</div>
+      </div>
+
+      <div class="idea">
+        <strong>Interview line:</strong> "Triage is a workflow, not a free agent: the LLM returns a
+        Zod-validated suggestion with one self-repair attempt, code turns it into proposals of
+        allow-listed types, and everything is stored as pending with rationale, expiry and audit. A
+        small eval took the prompt from 83% to 100% on our sample by fixing overlapping definitions,
+        and we know that number is optimistic."
+      </div>
+
+      <div class="pager">
+        <a href="../13-load-tickets/index.html">← Step 13</a>
+        <a href="../index.html">Overview</a>
+      </div>
+      <p class="caption">
+        Text version:
+        <a href="../../learning/14-triage-agent.md">docs/learning/14-triage-agent.md</a>
+      </p>
+    </main>
+  </body>
+</html>

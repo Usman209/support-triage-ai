@@ -11,30 +11,10 @@ import {
   NOT_FOUND_ANSWER,
   buildAnswerUserMessage,
 } from '../prompts/answer.prompt';
+import { realTraceId, traceLink } from '../tracing';
+import { citedIds, normaliseCitations } from './citations';
 import { rerank } from './reranker';
 import { retrieve } from './retriever';
-
-/**
- * Models don't always follow the citation format exactly. gpt-oss models, for example, sometimes
- * write 【1】 or 【1†L5-L8】 instead of [1]. Normalise every variant to [n] so parsing and the UI
- * see one format.
- */
-function normaliseCitations(text: string): string {
-  return text.replace(/【\s*(\d+)(?:†[^】]*)?\s*】/g, '[$1]');
-}
-
-/** Citation numbers like [1] or [2][3] that point at a provided source. */
-function citedIds(text: string, max: number): number[] {
-  const ids = new Set<number>();
-  for (const match of text.matchAll(/\[(\d+)\]/g)) {
-    const id = Number(match[1]);
-    if (id >= 1 && id <= max) ids.add(id);
-  }
-  return [...ids].sort((a, b) => a - b);
-}
-
-/** OpenTelemetry uses an all-zero trace id when tracing is off. */
-const NO_TRACE = /^0+$/;
 
 /**
  * Answer a question from the knowledge base. Traced in Langfuse as one trace ("rag-chat") with a
@@ -69,7 +49,7 @@ export function answerQuestion(question: string): Promise<ChatResponse> {
                 timings: response.timings,
               },
             });
-            const traceId = NO_TRACE.test(observation.traceId) ? null : observation.traceId;
+            const traceId = realTraceId(observation.traceId);
             return { ...response, traceId, traceUrl: traceLink(traceId) };
           } catch (error) {
             observation.update({
@@ -82,13 +62,6 @@ export function answerQuestion(question: string): Promise<ChatResponse> {
         { asType: 'chain' },
       ),
   );
-}
-
-/** Deep link to the trace in the Langfuse UI. */
-function traceLink(traceId: string | null): string | null {
-  const { langfuseHost, langfuseProjectId } = config.observability;
-  if (!traceId || !langfuseHost || !langfuseProjectId) return null;
-  return `${langfuseHost.replace(/\/$/, '')}/project/${langfuseProjectId}/traces/${traceId}`;
 }
 
 async function runAnswer(question: string): Promise<Omit<ChatResponse, 'traceId' | 'traceUrl'>> {

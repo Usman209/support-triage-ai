@@ -148,4 +148,17 @@ Tip: a strong answer has **what**, **why**, and **a trade-off**.
 69. **Why not overwrite all fields on re-load?** Other processes own some fields (approved actions).
 70. **Regex PII redaction enough?** First line only; production uses PII detectors before LLM/logs.
 
+## Triage agent (step 14)
+
+71. **Agent or workflow?** Known steps → workflow (code controls flow, LLM fills values); unknown
+    path → agent loop.
+72. **Reliable structured output?** JSON/schema mode, strict schema with enums, validate in code,
+    one repair with errors, fail safely.
+73. **Stop an agent doing something dangerous?** Allow-listed proposals only, guards, human approval,
+    re-validate at execution, audit, feature flag.
+74. **Model picks the "wrong" class: first step?** Check the spec/definitions, fix with general
+    rules, re-run the eval, beware overfitting.
+75. **Evaluate an LLM classifier?** Labelled set, per-field accuracy, review misses, versioned
+    prompts, held-out set you never tune on.
+
 <!-- New questions are added here as each task is built (RAG, agent, evals, security, deployment, monitoring). -->

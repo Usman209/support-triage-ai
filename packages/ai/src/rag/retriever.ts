@@ -27,9 +27,34 @@ export interface RetrievalResult {
 const QUERY_CACHE_MAX = 500;
 const queryCache = new Map<string, number[]>();
 
+function cacheKey(question: string): string {
+  const embedder = getEmbeddingProvider();
+  return `${embedder.model}:${embedder.dimensions}:${question.trim().toLowerCase()}`;
+}
+
+function cachePut(key: string, vector: number[]) {
+  queryCache.set(key, vector);
+  if (queryCache.size > QUERY_CACHE_MAX) {
+    const oldest = queryCache.keys().next().value;
+    if (oldest !== undefined) queryCache.delete(oldest);
+  }
+}
+
+/**
+ * Embed many queries in ONE API call and put them in the cache. Useful for batch jobs
+ * (e.g. triaging many tickets) on free tiers that allow only a few requests per minute.
+ */
+export async function warmQueryCache(questions: string[]): Promise<number> {
+  const missing = [...new Set(questions)].filter((q) => !queryCache.has(cacheKey(q)));
+  if (!missing.length) return 0;
+  const { vectors } = await getEmbeddingProvider().embed(missing, { inputType: 'query' });
+  missing.forEach((q, i) => cachePut(cacheKey(q), vectors[i] ?? []));
+  return missing.length;
+}
+
 async function embedQuery(question: string): Promise<{ vector: number[]; tokens: number }> {
   const embedder = getEmbeddingProvider();
-  const key = `${embedder.model}:${embedder.dimensions}:${question.trim().toLowerCase()}`;
+  const key = cacheKey(question);
   const cached = queryCache.get(key);
   if (cached) {
     queryCache.delete(key); // re-insert to mark as recently used
@@ -39,11 +64,7 @@ async function embedQuery(question: string): Promise<{ vector: number[]; tokens:
   // Embed the question as a 'query' (documents were embedded as 'document').
   const { vectors, usage } = await embedder.embed([question], { inputType: 'query' });
   const vector = vectors[0] ?? [];
-  queryCache.set(key, vector);
-  if (queryCache.size > QUERY_CACHE_MAX) {
-    const oldest = queryCache.keys().next().value;
-    if (oldest !== undefined) queryCache.delete(oldest);
-  }
+  cachePut(key, vector);
   return { vector, tokens: usage.inputTokens };
 }
 

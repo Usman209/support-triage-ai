@@ -2,4 +2,5 @@
 export { getChatProvider, getEmbeddingProvider } from './providers';
 export type * from './providers/types';
 export * from './rag';
-// TODO task 3.4: retriever + reranker. TODO task 4: tools and agents.
+export * from './agents';
+export { warmQueryCache } from './rag/retriever';
